@@ -1,7 +1,7 @@
 # The genetic architecture of an allosteric hormone receptor
 # Maximilian R. Stammnitz & Ben Lehner
 # bioRxiv link: https://www.biorxiv.org/content/10.1101/2025.05.30.656975v1
-# 31.05.2025
+# 21.10.2025
 # © M.R.S. (maximilian.stammnitz@crg.eu)
 
 #############################################
@@ -109,15 +109,14 @@ colnames(scaling) <- c(paste0(rep("block1_", 12), 1:12),
 ## Linear transformation
 coefficients <- matrix(NA, ncol = 48, nrow = 2)
 colnames(coefficients) <-  colnames(scaling)
-coefficients[,1:12] <- c(1, 0)
 for (i in 1:12){
   
   ### Block
-  for(j in 2:4){
+  for(j in 1:4){
     
     if(any(colnames(scaling) %in% paste0("block", j, "_", i))){
       
-      tmp.lm <- lm(formula = scaling[,paste0("block1_", i)] ~ scaling[,paste0("block", j, "_", i)])
+      tmp.lm <- lm(formula = c(0, scaling[2,paste0("block1_", i)]) ~ scaling[,paste0("block", j, "_", i)])
       tmp.lm <- summary(tmp.lm)
       coefficients[1,paste0("block", j, "_", i)] <- tmp.lm$coefficients[[2]]
       coefficients[2,paste0("block", j, "_", i)] <- tmp.lm$coefficients[[1]]  
@@ -130,9 +129,13 @@ for (i in 1:12){
 for (i in 1:length(PYL1_block1)){
   
   PYL1_block1[[i]]$gr_normalised <- PYL1_block1[[i]]$growthrate*coefficients[1,i] + coefficients[2,i]
+  PYL1_block1[[i]]$gr_sigma_normalised <- PYL1_block1[[i]]$growthrate_sigma*coefficients[1,i]
   PYL1_block2[[i]]$gr_normalised <- PYL1_block2[[i]]$growthrate*coefficients[1,c(i+12)] + coefficients[2,c(i+12)]
+  PYL1_block2[[i]]$gr_sigma_normalised <- PYL1_block2[[i]]$growthrate_sigma*coefficients[1,c(i+12)]
   PYL1_block3[[i]]$gr_normalised <- PYL1_block3[[i]]$growthrate*coefficients[1,c(i+24)] + coefficients[2,c(i+24)]
+  PYL1_block3[[i]]$gr_sigma_normalised <- PYL1_block3[[i]]$growthrate_sigma*coefficients[1,c(i+24)]
   PYL1_block4[[i]]$gr_normalised <- PYL1_block4[[i]]$growthrate*coefficients[1,c(i+36)] + coefficients[2,c(i+36)]
+  PYL1_block4[[i]]$gr_sigma_normalised <- PYL1_block4[[i]]$growthrate_sigma*coefficients[1,c(i+36)]
   
 }
 
@@ -176,9 +179,6 @@ for(i in 1:12){
                           PYL1_block4[[i]])
   
 }
-
-## Set minimum growth rate to 0
-PYL1.ABI1 <- lapply(PYL1.ABI1, function(x){x$gr_normalised[which(x$gr_normalised < 0)] <- 0; return(x)})
 
 ## Only keep mutations with AA Hamming distance of 1
 PYL1.ABI1 <- lapply(PYL1.ABI1, function(x){x <- x[which(x$Nham_aa == 1 | x$Nham_aa == 0),]; return(x)})
@@ -234,26 +234,30 @@ names(PYL1.ABI1) <- dosages
 ## Extract WT aa variants (incl. synonymous ones)
 PYL1.ABI1.WT <- lapply(PYL1.ABI1, function(x){y <- x[which(x[,"Nham_aa"] == 0),]; return(y)})
 
-## Build a dose-response matrix for each nucleotide sequence
-PYL1.ABI1.WT.mat <- matrix(NA, ncol = 12, nrow = length(unique(do.call(c, sapply(PYL1.ABI1.WT, function(x){x$nt_seq})))))
-colnames(PYL1.ABI1.WT.mat) <- names(PYL1.ABI1.WT)
-rownames(PYL1.ABI1.WT.mat) <- unique(do.call(c, sapply(PYL1.ABI1.WT, function(x){x$nt_seq})))
+## Build a dose-response (and error) matrix for each nucleotide sequence
+PYL1.ABI1.WT.mat <- PYL1.ABI1.WT.sigma.mat <- matrix(NA, ncol = 12, nrow = length(unique(do.call(c, sapply(PYL1.ABI1.WT, function(x){x$nt_seq})))))
+colnames(PYL1.ABI1.WT.mat) <- colnames(PYL1.ABI1.WT.sigma.mat) <- names(PYL1.ABI1.WT)
+rownames(PYL1.ABI1.WT.mat) <- rownames(PYL1.ABI1.WT.sigma.mat) <- unique(do.call(c, sapply(PYL1.ABI1.WT, function(x){x$nt_seq})))
 for(i in 1:12){
   PYL1.ABI1.WT.mat[,i] <- PYL1.ABI1.WT[[i]][match(rownames(PYL1.ABI1.WT.mat), PYL1.ABI1.WT[[i]]$nt_seq),"gr_normalised"]
+  PYL1.ABI1.WT.sigma.mat[,i] <- PYL1.ABI1.WT[[i]][match(rownames(PYL1.ABI1.WT.mat), PYL1.ABI1.WT[[i]]$nt_seq),"gr_sigma_normalised"]
 }
 
 ## Remove synonymous variants not fully covered across (+)-ABA concentrations
 PYL1.ABI1.WT.mat <- na.omit(PYL1.ABI1.WT.mat)
+PYL1.ABI1.WT.sigma.mat <- na.omit(PYL1.ABI1.WT.sigma.mat)
 
 ## Generate the dose response curve of the (nucleotide-level) WT
-WT.PYL1.drc <- cbind(PYL1.ABI1.WT.mat[1,],colnames(PYL1.ABI1.WT.mat))
+WT.PYL1.drc <- cbind(PYL1.ABI1.WT.mat[1,],PYL1.ABI1.WT.sigma.mat[1,],colnames(PYL1.ABI1.WT.mat))
 class(WT.PYL1.drc) <- "numeric"
 WT.PYL1.drc <- as.data.frame(WT.PYL1.drc)
-colnames(WT.PYL1.drc) <- c("GR", "concentration")
+colnames(WT.PYL1.drc) <- c("GR", "GR sigma", "concentration")
 
 WT.PYL1.drc <- drm(WT.PYL1.drc$GR ~ WT.PYL1.drc$concentration,
+                   weights = 1/WT.PYL1.drc$`GR sigma`,
                    fct = LL.4(fixed = c(NA, NA, NA, NA), names = c("Hill", "B[0]", "B[inf]", "EC50")),
-                   type = 'continuous')
+                   type = 'continuous',
+                   lowerl = c(NA, 0, NA, NA))
 WT.PYL1.drc.par <- WT.PYL1.drc$fit$par
 names(WT.PYL1.drc.par) <- c("Hill", "B[0]", "B[inf]", "EC50")
 WT.PYL1.drc.par <- WT.PYL1.drc.par[c(2:4,1)]
@@ -261,6 +265,7 @@ WT.PYL1.drc.par[4] <- -WT.PYL1.drc.par[4]
 
 ## Scale all growth rates to the wildtype B[inf]
 PYL1.ABI1 <- lapply(PYL1.ABI1, function(x){x$gr_normalised_WTscaled <- 100*x$gr_normalised/WT.PYL1.drc.par["B[inf]"]; return(x)})
+PYL1.ABI1 <- lapply(PYL1.ABI1, function(x){x$gr_sigma_normalised_WTscaled <- 100*x$gr_sigma_normalised/WT.PYL1.drc.par["B[inf]"]; return(x)})
 
 ## Save PYL1.ABI1 list as an .Rdata file
 save(PYL1.ABI1, file = "../../data/DiMSum/PYL1-ABI1/PYL1-ABI1_preprocessed.RData")
@@ -270,13 +275,13 @@ save(PYL1.ABI1, file = "../../data/DiMSum/PYL1-ABI1/PYL1-ABI1_preprocessed.RData
 ################
 
 # sessionInfo()
-# R version 4.4.1 (2024-06-14)
+# R version 4.5.1 (2025-06-13)
 # Platform: aarch64-apple-darwin20
 # Running under: macOS Sonoma 14.6.1
 # 
 # Matrix products: default
 # BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib 
-# LAPACK: /Library/Frameworks/R.framework/Versions/4.4-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.0
+# LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
 # 
 # locale:
 # [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
@@ -288,11 +293,11 @@ save(PYL1.ABI1, file = "../../data/DiMSum/PYL1-ABI1/PYL1-ABI1_preprocessed.RData
 # [1] stats     graphics  grDevices utils     datasets  methods   base     
 # 
 # other attached packages:
-# [1] reshape_0.8.9 drc_3.0-1     MASS_7.3-64   stringr_1.5.1
+# [1] reshape_0.8.10 drc_3.0-1      MASS_7.3-65    stringr_1.5.1 
 # 
 # loaded via a namespace (and not attached):
-# [1] vctrs_0.6.5       cli_3.6.4         rlang_1.1.5       TH.data_1.1-3     Formula_1.2-5     stringi_1.8.4     car_3.1-3        
-# [8] gtools_3.9.5      glue_1.8.0        zoo_1.8-12        colorspace_2.1-1  plyr_1.8.9        scales_1.3.0      grid_4.4.1       
-# [15] munsell_0.5.1     carData_3.0-5     abind_1.4-8       mvtnorm_1.3-3     lifecycle_1.0.4   compiler_4.4.1    multcomp_1.4-28  
-# [22] codetools_0.2-20  sandwich_3.1-1    Rcpp_1.0.14       rstudioapi_0.17.1 lattice_0.22-6    R6_2.6.1          splines_4.4.1    
-# [29] magrittr_2.0.3    Matrix_1.7-2      tools_4.4.1       plotrix_3.8-4     survival_3.8-3   
+# [1] vctrs_0.6.5        cli_3.6.5          rlang_1.1.6        TH.data_1.1-4      Formula_1.2-5      stringi_1.8.7      car_3.1-3         
+# [8] gtools_3.9.5       glue_1.8.0         zoo_1.8-14         plyr_1.8.9         scales_1.4.0       grid_4.5.1         carData_3.0-5     
+# [15] abind_1.4-8        mvtnorm_1.3-3      lifecycle_1.0.4    compiler_4.5.1     multcomp_1.4-28    codetools_0.2-20   RColorBrewer_1.1-3
+# [22] sandwich_3.1-1     Rcpp_1.1.0         rstudioapi_0.17.1  farver_2.1.2       lattice_0.22-7     R6_2.6.1           splines_4.5.1     
+# [29] magrittr_2.0.3     Matrix_1.7-4       tools_4.5.1        plotrix_3.8-4      survival_3.8-3
