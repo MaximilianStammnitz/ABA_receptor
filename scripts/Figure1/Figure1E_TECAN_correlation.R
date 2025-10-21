@@ -1,7 +1,7 @@
 # The genetic architecture of an allosteric hormone receptor
 # Maximilian R. Stammnitz & Ben Lehner
 # bioRxiv link: https://www.biorxiv.org/content/10.1101/2025.05.30.656975v1
-# 31.05.2025
+# 21.10.2025
 # © M.R.S. (maximilian.stammnitz@crg.eu)
 
 ###############################################
@@ -13,7 +13,7 @@
 ####################
 
 ## Libraries
-packages <- c("readxl", "growthrates", "reshape", "drc", "ggplot2", "ggtext")
+packages <- c("readxl", "growthrates", "reshape", "drc", "ggplot2", "ggtext", "rlang")
 
 ## Install missing packages
 install_if_missing <- function(pkg) {if (!requireNamespace(pkg, quietly = TRUE)) install.packages(pkg)}
@@ -319,10 +319,11 @@ names(PYL1.mutant.summary) <- names(PYL1.TECAN.curves.gr)
 for(i in 1:length(PYL1.mutant.summary)){
   
   #### matrix setup
-  PYL1.mutant.summary[[i]] <- matrix(NA, ncol = 3, nrow = 12)
+  PYL1.mutant.summary[[i]] <- matrix(NA, ncol = 4, nrow = 12)
   colnames(PYL1.mutant.summary[[i]]) <- c("TECAN1_gr",
                                           "TECAN2_gr",
-                                          "Competition_gr")
+                                          "Competition_gr",
+                                          "Competition_gr_sigma")
   rownames(PYL1.mutant.summary[[i]]) <- unique(names(PYL1.TECAN.curves.gr[[i]]))
   
   #### fill in TECAN data
@@ -332,20 +333,29 @@ for(i in 1:length(PYL1.mutant.summary)){
   #### fill in competition data
   if(i == 1){
     PYL1.mutant.summary[[i]][,"Competition_gr"] <- rev(apply(sapply(PYL1.ABI1, function(x){out <- x[which(x$WT == T),"gr_normalised_WTscaled"]; return(out)}), 2, median))
+    PYL1.mutant.summary[[i]][,"Competition_gr_sigma"] <- rev(apply(sapply(PYL1.ABI1, function(x){out <- x[which(x$WT == T),"gr_sigma_normalised_WTscaled"]; return(out)}), 2, median))    
   }else{
     var.tmp <- names(PYL1.mutant.summary)[i]
     var.tmp.pos <- as.numeric(substring(var.tmp, 2, nchar(var.tmp)-1))
     var.tmp.mut <- substring(var.tmp, nchar(var.tmp))
     PYL1.mutant.summary[[i]][,"Competition_gr"] <- rev(sapply(sapply(PYL1.ABI1, function(x){out <- x[which(x$Pos == var.tmp.pos & x$Mut == var.tmp.mut),"gr_normalised_WTscaled"]; return(out)}), median))
+    PYL1.mutant.summary[[i]][,"Competition_gr_sigma"] <- rev(sapply(sapply(PYL1.ABI1, function(x){out <- x[which(x$Pos == var.tmp.pos & x$Mut == var.tmp.mut),"gr_sigma_normalised_WTscaled"]; return(out)}), median))
   }
   
 }
 
 ## summarise
-TECAN.all <- do.call(c, lapply(PYL1.mutant.summary[-9], function(x){x[,2]}))
+TECAN.all <- do.call(c, lapply(PYL1.mutant.summary[-9], function(x){apply(x[,1:2], 1, function(x){mean(x)})}))
+TECAN.lower.all <- do.call(c, lapply(PYL1.mutant.summary[-9], function(x){apply(x[,1:2], 1, function(x){min(x)})}))
+TECAN.upper.all <- do.call(c, lapply(PYL1.mutant.summary[-9], function(x){apply(x[,1:2], 1, function(x){max(x)})}))
 COMPI.all <- do.call(c, lapply(PYL1.mutant.summary[-9], function(x){x[,3]}))
-out.tecan.df <- cbind("tecan" = TECAN.all, 
-                      "competition" = COMPI.all)
+COMPI.sigma.all <- do.call(c, lapply(PYL1.mutant.summary[-9], function(x){x[,4]}))
+out.tecan.df <- cbind("conc" = rep(1:12, 14),
+                      "tecan" = TECAN.all, 
+                      "tecan min" = TECAN.lower.all, 
+                      "tecan max" = TECAN.upper.all, 
+                      "competition" = COMPI.all, 
+                      "competition sigma" = COMPI.sigma.all)
 out.tecan.df <- as.data.frame(out.tecan.df)
 
 ## correlation
@@ -353,27 +363,40 @@ r <- cor(x = out.tecan.df$tecan,
          y = out.tecan.df$competition,
          method = "pearson")
 
-
 ## plot
 pdf("../../results/Figure1/Figure1E_individual_mutant_correlation.pdf",
     height = 15, width = 18)
 
 out.1E <- ggplot(out.tecan.df, aes(x = `tecan`, y = `competition`)) +
-  scale_x_continuous(breaks = seq(f = 0, t = 100, length.out = 6), limits = c(-20, 140)) +
-  scale_y_continuous(breaks = seq(f = 0, t = 100, length.out = 6), limits = c(-20, 140)) +
-  coord_cartesian(xlim = c(-5, 121), ylim = c(-5, 115)) +
-  geom_point(data = out.tecan.df,
-             mapping = aes(x = `tecan`, y = `competition`),
-             color = "black", size = 6) +
+  scale_x_continuous(breaks = seq(f = 0, t = 100, length.out = 6), limits = c(-1000, 2000)) +
+  scale_y_continuous(breaks = seq(f = 0, t = 100, length.out = 6), limits = c(-1000, 2000)) +
+  coord_cartesian(xlim = c(-21, 121), ylim = c(-21, 121)) +
   geom_smooth(out.tecan.df,
               mapping = aes(x = `tecan`, y = `competition`),
               method = 'lm',
               color = "black", fullrange = T,
               linewidth = 1.5, alpha = 0.2, fill = "grey50") +
+  geom_errorbar(data = out.tecan.df, 
+                aes(x = `tecan`, 
+                    ymin = `competition` - `competition sigma` * 1.96, 
+                    ymax = `competition` + `competition sigma` * 1.96),
+                linewidth = 0.2,
+                color = "black") +
+  geom_errorbarh(data = out.tecan.df, 
+                 aes(x = `competition`, 
+                     xmin = `tecan min`, 
+                     xmax = `tecan max`),
+                 linewidth = 0.2,
+                 color = "black") +
+  geom_point(data = out.tecan.df,
+             mapping = aes(x = `tecan`, y = `competition`, fill = `conc`),
+             color = "black", size = 5, shape = 21, stroke = 0.5) +
+  scale_fill_gradient(low = "white", high = "darkgreen") +
   annotate("text",
-           x = 0,
-           y = 105,
-           label = bquote(italic(r) == .(format(r, digits = 2))),
+           x = -15,
+           y = 109,
+           label = expr_text(bquote(italic(r) == .(format(r, digits = 2)))),
+           parse = T,
            hjust = 0, size = 25, color = "black") +
   theme_classic(base_size = 50) +
   theme(plot.title = element_markdown(),
@@ -383,11 +406,12 @@ out.1E <- ggplot(out.tecan.df, aes(x = `tecan`, y = `competition`)) +
         axis.line.x = element_line(size = 1, color = 'black'),
         axis.line.y = element_line(size = 1, color = 'black'),
         axis.title.x = element_text(family = 'Helvetica', colour = 'black', size = 50, vjust = -1),
-        axis.title.y = element_text(family = 'Helvetica', colour = 'black', size = 50, vjust = 3),        legend.position = "none",
+        axis.title.y = element_text(family = 'Helvetica', colour = 'black', size = 50, vjust = 3),        
+        legend.position = "none",
         text = element_text(family="Helvetica"),
         plot.margin = unit(c(2, 2, 2, 2),"cm")) +
-  labs(x = "Binding (individual mutants)",
-       y = "Binding (library sequencing)")
+  labs(x = "Relative PYL1/ABI1 Binding (Individual Mutants)",
+       y = "Relative PYL1/ABI1 Binding (Library)")
 
 print(out.1E)
 
@@ -398,13 +422,13 @@ dev.off()
 ################
 
 # sessionInfo()
-# R version 4.4.1 (2024-06-14)
+# R version 4.5.1 (2025-06-13)
 # Platform: aarch64-apple-darwin20
 # Running under: macOS Sonoma 14.6.1
 # 
 # Matrix products: default
 # BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib 
-# LAPACK: /Library/Frameworks/R.framework/Versions/4.4-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.0
+# LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
 # 
 # locale:
 # [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
@@ -416,16 +440,16 @@ dev.off()
 # [1] stats     graphics  grDevices utils     datasets  methods   base     
 # 
 # other attached packages:
-# [1] ggtext_0.1.2      ggplot2_3.5.1     drc_3.0-1         MASS_7.3-64       reshape_0.8.9     growthrates_0.8.4
-# [7] deSolve_1.40      lattice_0.22-6    readxl_1.4.3     
+# [1] rlang_1.1.6       ggtext_0.1.2      ggplot2_4.0.0     drc_3.0-1         MASS_7.3-65       reshape_0.8.10    growthrates_0.8.5
+# [8] deSolve_1.40      lattice_0.22-7    readxl_1.4.5     
 # 
 # loaded via a namespace (and not attached):
-# [1] sandwich_3.1-1    generics_0.1.3    xml2_1.3.6        gtools_3.9.5      FME_1.3.6.3       magrittr_2.0.3   
-# [7] grid_4.4.1        mvtnorm_1.3-3     cellranger_1.1.0  plyr_1.8.9        Matrix_1.7-2      Formula_1.2-5    
-# [13] survival_3.8-3    multcomp_1.4-28   mgcv_1.9-1        scales_1.3.0      TH.data_1.1-3     codetools_0.2-20 
-# [19] abind_1.4-8       cli_3.6.4         crayon_1.5.3      rlang_1.1.5       munsell_0.5.1     splines_4.4.1    
-# [25] withr_3.0.2       plotrix_3.8-4     rootSolve_1.8.2.4 tools_4.4.1       parallel_4.4.1    coda_0.19-4.1    
-# [31] minpack.lm_1.2-4  minqa_1.2.8       dplyr_1.1.4       colorspace_2.1-1  vctrs_0.6.5       R6_2.6.1         
-# [37] zoo_1.8-12        lifecycle_1.0.4   car_3.1-3         pkgconfig_2.0.3   pillar_1.10.1     gtable_0.3.6     
-# [43] glue_1.8.0        Rcpp_1.0.14       tibble_3.2.1      tidyselect_1.2.1  rstudioapi_0.17.1 farver_2.1.2     
-# [49] nlme_3.1-167      carData_3.0-5     compiler_4.4.1    gridtext_0.1.5
+# [1] sandwich_3.1-1     generics_0.1.4     xml2_1.4.0         gtools_3.9.5       FME_1.3.6.4        magrittr_2.0.3    
+# [7] grid_4.5.1         RColorBrewer_1.1-3 mvtnorm_1.3-3      cellranger_1.1.0   plyr_1.8.9         Matrix_1.7-4      
+# [13] Formula_1.2-5      survival_3.8-3     multcomp_1.4-28    mgcv_1.9-3         scales_1.4.0       TH.data_1.1-4     
+# [19] codetools_0.2-20   abind_1.4-8        cli_3.6.5          crayon_1.5.3       splines_4.5.1      withr_3.0.2       
+# [25] plotrix_3.8-4      rootSolve_1.8.2.4  tools_4.5.1        parallel_4.5.1     coda_0.19-4.1      minpack.lm_1.2-4  
+# [31] minqa_1.2.8        dplyr_1.1.4        vctrs_0.6.5        R6_2.6.1           zoo_1.8-14         lifecycle_1.0.4   
+# [37] car_3.1-3          pkgconfig_2.0.3    pillar_1.11.0      gtable_0.3.6       glue_1.8.0         Rcpp_1.1.0        
+# [43] tibble_3.3.0       tidyselect_1.2.1   rstudioapi_0.17.1  farver_2.1.2       nlme_3.1-168       labeling_0.4.3    
+# [49] carData_3.0-5      compiler_4.5.1     S7_0.2.0           gridtext_0.1.5
