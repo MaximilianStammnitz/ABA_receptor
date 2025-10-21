@@ -123,7 +123,8 @@ out.1D <- ggplot(data = PYL1.ABI1.WT.curves) +
   annotate("text",
            x = 9.062741e-03/3.5/3.5/3.5,
            y = 105,
-           label = bquote(italic(R)^2 == .(format(r_squared, digits = 2))),  ##
+           label = expr_text(bquote(italic(R)^2 == .(format(r_squared, digits = 2)))),
+           parse = T,
            hjust = 0, size = 25, color = "black") +
   theme_classic(base_size = 50) +
   theme(plot.title = element_markdown(),
