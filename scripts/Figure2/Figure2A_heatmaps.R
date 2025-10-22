@@ -1,7 +1,7 @@
 # The genetic architecture of an allosteric hormone receptor
 # Maximilian R. Stammnitz & Ben Lehner
 # bioRxiv link: https://www.biorxiv.org/content/10.1101/2025.05.30.656975v1
-# 31.05.2025
+# 22.10.2025
 # © M.R.S. (maximilian.stammnitz@crg.eu)
 
 ################################################
@@ -186,13 +186,13 @@ dev.off()
 ################
 
 # sessionInfo()
-# R version 4.4.1 (2024-06-14)
+# R version 4.5.1 (2025-06-13)
 # Platform: aarch64-apple-darwin20
 # Running under: macOS Sonoma 14.6.1
 # 
 # Matrix products: default
 # BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib 
-# LAPACK: /Library/Frameworks/R.framework/Versions/4.4-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.0
+# LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
 # 
 # locale:
 # [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
@@ -204,10 +204,10 @@ dev.off()
 # [1] grid      stats     graphics  grDevices utils     datasets  methods   base     
 # 
 # other attached packages:
-# [1] cowplot_1.1.3   gridExtra_2.3   pheatmap_1.0.12 scales_1.3.0    stringr_1.5.1  
+# [1] cowplot_1.2.0   gridExtra_2.3   pheatmap_1.0.13 scales_1.4.0    stringr_1.5.1  
 # 
 # loaded via a namespace (and not attached):
-# [1] RColorBrewer_1.1-3 R6_2.6.1           tidyselect_1.2.1   magrittr_2.0.3     gtable_0.3.6       glue_1.8.0        
-# [7] tibble_3.2.1       pkgconfig_2.0.3    generics_0.1.3     dplyr_1.1.4        ggplot2_3.5.1      lifecycle_1.0.4   
-# [13] cli_3.6.4          vctrs_0.6.5        compiler_4.4.1     rstudioapi_0.17.1  tools_4.4.1        pillar_1.10.1     
-# [19] munsell_0.5.1      colorspace_2.1-1   rlang_1.1.5        stringi_1.8.4   
+# [1] RColorBrewer_1.1-3 R6_2.6.1           tidyselect_1.2.1   farver_2.1.2       magrittr_2.0.3     gtable_0.3.6      
+# [7] glue_1.8.0         tibble_3.3.0       pkgconfig_2.0.3    generics_0.1.4     dplyr_1.1.4        ggplot2_4.0.0     
+# [13] lifecycle_1.0.4    cli_3.6.5          S7_0.2.0           vctrs_0.6.5        compiler_4.5.1     rstudioapi_0.17.1 
+# [19] tools_4.5.1        pillar_1.11.0      rlang_1.1.6        stringi_1.8.7    
