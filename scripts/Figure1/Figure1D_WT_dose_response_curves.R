@@ -69,7 +69,8 @@ WT.PYL1.drc.par[4] <- -WT.PYL1.drc.par[4]
 WT.drc.predict.newdata <- expand.grid(conc = c(0, exp(seq(log(0.001), log(5000), length = 999))))
 WT.PYL1.drc.predict <- predict(WT.PYL1.drc,
                                newdata = WT.drc.predict.newdata,
-                               interval = "confidence")
+                               interval = "confidence",
+                               level = 0.95)
 WT.drc.predict.newdata$p <- WT.PYL1.drc.predict[,1]
 WT.drc.predict.newdata$pmin <- WT.PYL1.drc.predict[,2]
 WT.drc.predict.newdata$pmax <- WT.PYL1.drc.predict[,3]
