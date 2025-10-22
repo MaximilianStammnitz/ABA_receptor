@@ -1,7 +1,7 @@
 # The genetic architecture of an allosteric hormone receptor
 # Maximilian R. Stammnitz & Ben Lehner
 # bioRxiv link: https://www.biorxiv.org/content/10.1101/2025.05.30.656975v1
-# 31.05.2025
+# 22.10.2025
 # © M.R.S. (maximilian.stammnitz@crg.eu)
 
 #################################################
@@ -13,7 +13,7 @@
 ####################
 
 ## Libraries
-packages <- c("drc", "ggrepel", "ggplot2", "ggtext")
+packages <- c("drc", "ggrepel", "ggplot2", "ggtext", "rlang")
 
 ## Install missing packages
 install_if_missing <- function(pkg) {if (!requireNamespace(pkg, quietly = TRUE)) install.packages(pkg)}
@@ -36,11 +36,12 @@ PYL1.ABI1 <- lapply(PYL1.ABI1, function(x){x <- x[grep("WT|H87A|F88A|I111A|S112A
 PYL1.ABI1 <- lapply(PYL1.ABI1, function(x){x <- x[order(as.numeric(x$Pos)),]; return(x)})
 
 ### Build a dose-response matrix for each nucleotide sequence
-PYL1.ABI1.mat <- matrix(NA, ncol = 12, nrow = 13)
-colnames(PYL1.ABI1.mat) <- names(PYL1.ABI1)
-rownames(PYL1.ABI1.mat) <- PYL1.ABI1[[1]]$id
+PYL1.ABI1.mat <- PYL1.ABI1.sigma.mat <- matrix(NA, ncol = 12, nrow = 13)
+colnames(PYL1.ABI1.mat) <- colnames(PYL1.ABI1.sigma.mat) <- names(PYL1.ABI1)
+rownames(PYL1.ABI1.mat) <- rownames(PYL1.ABI1.sigma.mat) <- PYL1.ABI1[[1]]$id
 for(i in 1:12){
   PYL1.ABI1.mat[,i] <- PYL1.ABI1[[i]][match(rownames(PYL1.ABI1.mat), PYL1.ABI1[[i]]$id),"gr_normalised"]
+  PYL1.ABI1.sigma.mat[,i] <- PYL1.ABI1[[i]][match(rownames(PYL1.ABI1.mat), PYL1.ABI1[[i]]$id),"gr_sigma_normalised"]
 }
 
 ### Calculate dose-response curves
@@ -53,13 +54,14 @@ names(PYL1.ABI1.ls) <- rownames(PYL1.ABI1.mat)
 for (i in 1:length(PYL1.ABI1.ls)){
 
   ## Temporary input data frame
-  tmp.drc <- cbind(PYL1.ABI1.mat[i,],colnames(PYL1.ABI1.mat))
+  tmp.drc <- cbind(PYL1.ABI1.mat[i,],PYL1.ABI1.sigma.mat[i,],colnames(PYL1.ABI1.mat))
   class(tmp.drc) <- "numeric"
   tmp.drc <- as.data.frame(tmp.drc)
-  colnames(tmp.drc) <- c("GR", "concentration")
+  colnames(tmp.drc) <- c("GR", "GR sigma", "concentration")
 
   ## Curve fitting & parameter extraction
   tmp.drc <- drm(tmp.drc$GR ~ tmp.drc$concentration,
+                 weights = 1/tmp.drc$`GR sigma`,
                  fct = LL.4(fixed = c(NA, NA, NA, NA), names = c("Hill", "B[0]", "B[inf]", "EC50")),
                  type = 'continuous')
   tmp.drc.par <- tmp.drc$fit$par
@@ -68,7 +70,6 @@ for (i in 1:length(PYL1.ABI1.ls)){
   tmp.drc.par[4] <- -tmp.drc.par[4]
 
   ## Predict binding at 10 µM
-  tmp.drc$concentration[12] <- 9.062741e-03/3.5/3.5/3.5 ## "0-conc." positioning for log scale
   tmp.drc.predict.newdata <- expand.grid(conc = 10)
   tmp.drc.predict <- predict(tmp.drc,
                              newdata = tmp.drc.predict.newdata,
@@ -120,17 +121,17 @@ out.1F <- ggplot(out.miya.10uM.df, aes(x = `miyazono`, y = `10 µM mean`)) +
   scale_x_continuous(breaks = seq(f = 0, t = 100, length.out = 6), limits = c(-100, 200)) +
   scale_y_continuous(breaks = seq(f = 0, t = 100, length.out = 6), limits = c(-100, 200)) +
   coord_cartesian(xlim = c(-5, 121), ylim = c(-5, 115)) +
-  geom_point(data = out.miya.10uM.df,
-             mapping = aes(x = `miyazono`, y = `10 µM mean`),
-             color = "black", size = 10) +
-  geom_errorbar(aes(ymin = `10 µM lower`, ymax = `10 µM upper`),
-                 color = "black", linewidth = 1) +
   geom_smooth(out.miya.10uM.df,
               mapping = aes(x = `miyazono`, y = `10 µM mean`),
               method = 'lm',
               color = "black",
               fullrange = T,
               linewidth = 1.5, alpha = 0.2, fill = "grey50") +
+  geom_errorbar(aes(ymin = `10 µM lower`, ymax = `10 µM upper`),
+                 color = "black", linewidth = 1) +
+  geom_point(data = out.miya.10uM.df,
+             mapping = aes(x = `miyazono`, y = `10 µM mean`),
+             color = "black", size = 8, shape = 21, fill = "#569956") +
   geom_text_repel(data = out.miya.10uM.df,
                   aes(x = `miyazono`, y = `10 µM mean`,
                       label = rownames(out.miya.10uM.df)),
@@ -144,7 +145,8 @@ out.1F <- ggplot(out.miya.10uM.df, aes(x = `miyazono`, y = `10 µM mean`)) +
   annotate("text",
            x = 0,
            y = 105,
-           label = bquote(italic(r) == .(format(r, digits = 2))),
+           label = expr_text(bquote(italic(r) == .(format(r, digits = 2)))),
+           parse = T,
            hjust = 0, size = 25, color = "black") +
   theme_classic(base_size = 50) +
   theme(plot.title = element_markdown(),
@@ -158,8 +160,8 @@ out.1F <- ggplot(out.miya.10uM.df, aes(x = `miyazono`, y = `10 µM mean`)) +
         legend.position = "none",
         text = element_text(family="Helvetica"),
         plot.margin = unit(c(2, 2, 2, 2),"cm")) +
-  labs(x = "Binding (Miyazono et al., Nature 2009)",
-       y = "Binding (this study)")
+  labs(x = "Relative PYL1/ABI1 Binding (Miyazono et al., 2009)",
+       y = "Relative PYL1/ABI1 Binding (this study)")
 
 print(out.1F)
 
@@ -170,13 +172,13 @@ dev.off()
 ################
 
 # sessionInfo()
-# R version 4.4.1 (2024-06-14)
+# R version 4.5.1 (2025-06-13)
 # Platform: aarch64-apple-darwin20
 # Running under: macOS Sonoma 14.6.1
 # 
 # Matrix products: default
 # BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib 
-# LAPACK: /Library/Frameworks/R.framework/Versions/4.4-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.0
+# LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
 # 
 # locale:
 # [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
@@ -188,14 +190,14 @@ dev.off()
 # [1] stats     graphics  grDevices utils     datasets  methods   base     
 # 
 # other attached packages:
-# [1] ggtext_0.1.2  ggrepel_0.9.6 ggplot2_3.5.1 drc_3.0-1     MASS_7.3-64  
+# [1] rlang_1.1.6   ggtext_0.1.2  ggrepel_0.9.6 ggplot2_4.0.0 drc_3.0-1     MASS_7.3-65  
 # 
 # loaded via a namespace (and not attached):
-# [1] Matrix_1.7-2      gtable_0.3.6      crayon_1.5.3      dplyr_1.1.4       compiler_4.4.1    gtools_3.9.5     
-# [7] tidyselect_1.2.1  plotrix_3.8-4     Rcpp_1.0.14       xml2_1.3.6        splines_4.4.1     scales_1.3.0     
-# [13] lattice_0.22-6    TH.data_1.1-3     R6_2.6.1          generics_0.1.3    Formula_1.2-5     tibble_3.2.1     
-# [19] car_3.1-3         munsell_0.5.1     pillar_1.10.1     rlang_1.1.5       multcomp_1.4-28   cli_3.6.4        
-# [25] mgcv_1.9-1        withr_3.0.2       magrittr_2.0.3    gridtext_0.1.5    grid_4.4.1        rstudioapi_0.17.1
-# [31] mvtnorm_1.3-3     sandwich_3.1-1    nlme_3.1-167      lifecycle_1.0.4   vctrs_0.6.5       glue_1.8.0       
-# [37] farver_2.1.2      codetools_0.2-20  zoo_1.8-12        survival_3.8-3    abind_1.4-8       carData_3.0-5    
-# [43] colorspace_2.1-1  tools_4.4.1       pkgconfig_2.0.3  
+# [1] Matrix_1.7-4       gtable_0.3.6       crayon_1.5.3       dplyr_1.1.4        compiler_4.5.1     gtools_3.9.5      
+# [7] tidyselect_1.2.1   plotrix_3.8-4      Rcpp_1.1.0         xml2_1.4.0         splines_4.5.1      scales_1.4.0      
+# [13] lattice_0.22-7     TH.data_1.1-4      R6_2.6.1           generics_0.1.4     Formula_1.2-5      tibble_3.3.0      
+# [19] car_3.1-3          pillar_1.11.0      RColorBrewer_1.1-3 multcomp_1.4-28    S7_0.2.0           cli_3.6.5         
+# [25] mgcv_1.9-3         withr_3.0.2        magrittr_2.0.3     gridtext_0.1.5     grid_4.5.1         rstudioapi_0.17.1 
+# [31] mvtnorm_1.3-3      sandwich_3.1-1     nlme_3.1-168       lifecycle_1.0.4    vctrs_0.6.5        glue_1.8.0        
+# [37] farver_2.1.2       codetools_0.2-20   zoo_1.8-14         survival_3.8-3     abind_1.4-8        carData_3.0-5     
+# [43] pkgconfig_2.0.3    tools_4.5.1
