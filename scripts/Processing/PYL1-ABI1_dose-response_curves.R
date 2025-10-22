@@ -1,7 +1,7 @@
 # The genetic architecture of an allosteric hormone receptor
 # Maximilian R. Stammnitz & Ben Lehner
 # bioRxiv link: https://www.biorxiv.org/content/10.1101/2025.05.30.656975v1
-# 31.05.2025
+# 22.10.2025
 # © M.R.S. (maximilian.stammnitz@crg.eu)
 
 #########################################################
@@ -13,7 +13,7 @@
 ####################
 
 # Libraries
-packages <- c("stringr", "scales", "drc", "ggplot2", "ggtext")
+packages <- c("stringr", "scales", "drc", "ggplot2", "ggtext", "rlang")
 
 ## Install missing packages
 install_if_missing <- function(pkg) {if (!requireNamespace(pkg, quietly = TRUE)) install.packages(pkg)}
@@ -35,18 +35,18 @@ PYL1.ABI1 <- lapply(PYL1.ABI1, function(x){x <- x[-which(x$WT == T & x$nt_seq !=
 
 ## Summarise WT-rescaled binding fitness for each variant vs. ABA combination
 ## Matrix format
-PYL1.ABI1.summary <- matrix(NA, nrow = 177*21, ncol = 12)
-colnames(PYL1.ABI1.summary) <- names(PYL1.ABI1)
+PYL1.ABI1.summary <- PYL1.ABI1.sigma.summary <- matrix(NA, nrow = 177*21, ncol = 12)
+colnames(PYL1.ABI1.summary) <- colnames(PYL1.ABI1.sigma.summary) <- names(PYL1.ABI1)
 ids <- c()
 for(i in 1:177){
   tmp.pos <- rep(str_split_fixed(PYL1.ABI1$`2500`[which(PYL1.ABI1$`2500`$WT)[1],"aa_seq"], "", 177)[i], 21)
   ids <- c(ids, paste0(tmp.pos, i + 32))
 }
-rownames(PYL1.ABI1.summary) <- paste0(ids, rep(c("G", "A", "V", "L", "M",
-                                                 "I", "F", "Y", "W", "K",
-                                                 "R", "H", "D", "E", "S",
-                                                 "T", "C", "N", "Q", "P",
-                                                 "*"),177))
+rownames(PYL1.ABI1.summary) <- rownames(PYL1.ABI1.sigma.summary) <- paste0(ids, rep(c("G", "A", "V", "L", "M",
+                                                                                      "I", "F", "Y", "W", "K",
+                                                                                      "R", "H", "D", "E", "S",
+                                                                                      "T", "C", "N", "Q", "P",
+                                                                                      "*"),177))
 
 ## Fill
 WT <- str_split_fixed(PYL1.ABI1$`2500`[which(PYL1.ABI1$`2500`$WT)[1],"aa_seq"],"",177)[1,]
@@ -60,6 +60,7 @@ for(j in 1:length(PYL1.ABI1)){
     if(all(tmp.vars[i,] == WT)){
       
       PYL1.ABI1.summary[paste0(WT, 33:209, WT),j] <- PYL1.ABI1[[j]][i,"gr_normalised_WTscaled"]
+      PYL1.ABI1.sigma.summary[paste0(WT, 33:209, WT),j] <- PYL1.ABI1[[j]][i,"gr_sigma_normalised_WTscaled"]
       next
       
     }
@@ -76,6 +77,7 @@ for(j in 1:length(PYL1.ABI1)){
     ### otherwise obtain the corresponding fitness
     tmp.mut <- paste0(WT[pos.mut], pos.mut + 32, tmp.vars[i,pos.mut])
     PYL1.ABI1.summary[tmp.mut,j] <- PYL1.ABI1[[j]][i,"gr_normalised_WTscaled"]
+    PYL1.ABI1.sigma.summary[tmp.mut,j] <- PYL1.ABI1[[j]][i,"gr_sigma_normalised_WTscaled"]
     
   }
   
@@ -85,8 +87,10 @@ rm(i,j,tmp.vars,ids,pos.mut,tmp.mut,tmp.pos)
 ## Subset genotypes to only occur once (i.e. only one WT)
 WTs.pos <- match(paste0(WT, 33:209, WT), rownames(PYL1.ABI1.summary))
 PYL1.ABI1.summary.nonWT <- PYL1.ABI1.summary[-WTs.pos[-1],]
+PYL1.ABI1.sigma.summary.nonWT <- PYL1.ABI1.sigma.summary[-WTs.pos[-1],]
 PYL1.ABI1.summary.nonWT <- PYL1.ABI1.summary.nonWT[c(WTs.pos[1],1:c(WTs.pos[1]-1),c(WTs.pos[1]+1):nrow(PYL1.ABI1.summary.nonWT)),]
-rownames(PYL1.ABI1.summary.nonWT)[1] <- "WT"
+PYL1.ABI1.sigma.summary.nonWT <- PYL1.ABI1.sigma.summary.nonWT[c(WTs.pos[1],1:c(WTs.pos[1]-1),c(WTs.pos[1]+1):nrow(PYL1.ABI1.sigma.summary.nonWT)),]
+rownames(PYL1.ABI1.summary.nonWT)[1] <- rownames(PYL1.ABI1.sigma.summary.nonWT)[1] <- "WT"
 
 
 ## 2. Calculate and plot (+)-ABA dose-response curves using the Hill equation ##
@@ -105,7 +109,7 @@ colnames(parameters.Hill) <- c("Hill", "B[0]", "B[inf]", "EC50",
 rownames(parameters.Hill) <- rownames(PYL1.ABI1.summary.nonWT)
 
 ## loop over all genotypes, this may take a few minutes ...
-for(i in 1:nrow(PYL1.ABI1.summary.nonWT)){
+for(i in 1:nrow(parameters.Hill)){
 
   print(i)
 
@@ -120,15 +124,17 @@ for(i in 1:nrow(PYL1.ABI1.summary.nonWT)){
 
   ### fetch genotype's data
   drc.summary.tmp <- cbind(PYL1.ABI1.summary.nonWT[i,],
+                           PYL1.ABI1.sigma.summary.nonWT[i,],
                            colnames(PYL1.ABI1.summary.nonWT))
   class(drc.summary.tmp) <- "numeric"
   drc.summary.tmp <- as.data.frame(drc.summary.tmp)
-  colnames(drc.summary.tmp) <- c("binding", "concentration")
+  colnames(drc.summary.tmp) <- c("binding", "binding sigma", "concentration")
 
   ### freely estimate the wildtype parameters, used to initialise runs for PYL1 mutants
   if(i == 1){
 
     WT.PYL1.drc.Hill <- drm(drc.summary.tmp$binding ~ drc.summary.tmp$concentration,
+                            weights = 1/drc.summary.tmp$`binding sigma`,
                             fct = LL.4(fixed = c(NA, NA, NA, NA),
                                        names = c("Hill", "B[0]", "B[inf]", "EC50")),
                             type = 'continuous')
@@ -147,6 +153,7 @@ for(i in 1:nrow(PYL1.ABI1.summary.nonWT)){
   tryCatch({
 
     tmp.PYL1.drc.Hill <- drm(drc.summary.tmp$binding ~ drc.summary.tmp$concentration,
+                             weights = 1/drc.summary.tmp$`binding sigma`,                             
                              fct = LL.4(fixed = c(NA, NA, NA, NA), names = c("Hill", "B[0]", "B[inf]", "EC50")),
                              type = 'continuous', start = par.WT.PYL1.drc.Hill)},
     error = function(e){skip_to_next <<- TRUE})
@@ -196,7 +203,7 @@ for(i in 1:nrow(PYL1.ABI1.summary.nonWT)){
                         aes(x = conc, y = p, ymin = pmin, ymax = pmax),
                         alpha = 0.2, fill = "grey50") +
             geom_point(data = drc.summary.tmp, aes(x = concentration, y = binding),
-                       color = "black", size = 10) +
+                       color = "black", size = 8, shape = 16) +
             geom_line(data = tmp.PYL1.drc.Hill.predict.newdata, aes(x = conc, y = p), linewidth = 1.5) +
             scale_x_log10(breaks = c(9.062741e-03/3.5/3.5/3.5, 0.01, 0.1, 1, 10, 100, 1000),
                           labels = c(0, 0.01, 0.1, 1, 10, 100, "1,000"),
@@ -206,7 +213,8 @@ for(i in 1:nrow(PYL1.ABI1.summary.nonWT)){
             annotate("text",
                      x = 9.062741e-03/3.5/3.5/3.5,
                      y = 105,
-                     label = bquote(italic(R)^2 == .(format(parameters.Hill[i,"R^2"], digits = 2))),  ##
+                     label = expr_text(bquote(italic(R)^2 == .(format(parameters.Hill[i,"R^2"], digits = 2)))),
+                     parse = T,
                      hjust = 0, size = 25, color = "black") +
             theme_classic(base_size = 50) +
             theme(plot.title = element_markdown(),
@@ -221,7 +229,7 @@ for(i in 1:nrow(PYL1.ABI1.summary.nonWT)){
                   text = element_text(family="Helvetica"),
                   plot.margin = unit(c(2, 2, 2, 2),"cm")) +
             labs(x = "(+)-ABA conc. (µM)",
-                 y = "Binding (library sequencing)",
+                 y = "Relative PYL1/ABI1 Binding (library sequencing)",
                  title = rownames(PYL1.ABI1.summary.nonWT)[i],
                  subtitle = paste0("Hill parameters: B[0] = ", round(parameters.Hill[i,"B[0]"],3), if(!is.na(parameters.Hill[i,"B[0] P"])){if(parameters.Hill[i,"B[0] P"] < 0.05){"*"}},
                                    ", B[inf] = ", round(parameters.Hill[i,"B[inf]"],3), if(!is.na(parameters.Hill[i,"B[inf] P"])){if(parameters.Hill[i,"B[inf] P"] < 0.05){"*"}},
@@ -244,13 +252,13 @@ save(parameters.Hill, file = "../../data/DRCs/PYL1-ABI1_parameters_Hill.RData")
 ################
 
 # sessionInfo()
-# R version 4.4.1 (2024-06-14)
+# R version 4.5.1 (2025-06-13)
 # Platform: aarch64-apple-darwin20
 # Running under: macOS Sonoma 14.6.1
 # 
 # Matrix products: default
 # BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib 
-# LAPACK: /Library/Frameworks/R.framework/Versions/4.4-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.0
+# LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
 # 
 # locale:
 # [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
@@ -262,13 +270,12 @@ save(parameters.Hill, file = "../../data/DRCs/PYL1-ABI1_parameters_Hill.RData")
 # [1] stats     graphics  grDevices utils     datasets  methods   base     
 # 
 # other attached packages:
-# [1] ggtext_0.1.2  ggplot2_3.5.1 tgp_2.4-23    drc_3.0-1     MASS_7.3-64   scales_1.3.0  stringr_1.5.1
+# [1] rlang_1.1.6   ggtext_0.1.2  ggplot2_4.0.0 drc_3.0-1     MASS_7.3-65   scales_1.4.0  stringr_1.5.1
 # 
 # loaded via a namespace (and not attached):
-# [1] sandwich_3.1-1    generics_0.1.3    xml2_1.3.6        gtools_3.9.5      stringi_1.8.4     lattice_0.22-6    magrittr_2.0.3   
-# [8] grid_4.4.1        maptree_1.4-8     mvtnorm_1.3-3     Matrix_1.7-2      Formula_1.2-5     survival_3.8-3    multcomp_1.4-28  
-# [15] TH.data_1.1-3     codetools_0.2-20  abind_1.4-8       cli_3.6.4         rlang_1.1.5       crayon_1.5.3      commonmark_1.9.2 
-# [22] munsell_0.5.1     splines_4.4.1     withr_3.0.2       plotrix_3.8-4     tools_4.4.1       dplyr_1.1.4       colorspace_2.1-1 
-# [29] vctrs_0.6.5       R6_2.6.1          rpart_4.1.24      zoo_1.8-12        lifecycle_1.0.4   car_3.1-3         cluster_2.1.8    
-# [36] pkgconfig_2.0.3   pillar_1.10.1     gtable_0.3.6      glue_1.8.0        Rcpp_1.0.14       xfun_0.51         tibble_3.2.1     
-# [43] tidyselect_1.2.1  rstudioapi_0.17.1 farver_2.1.2      carData_3.0-5     compiler_4.4.1    markdown_1.13     gridtext_0.1.5  
+# [1] Matrix_1.7-4       gtable_0.3.6       crayon_1.5.3       dplyr_1.1.4        compiler_4.5.1     gtools_3.9.5       Rcpp_1.1.0         tidyselect_1.2.1  
+# [9] plotrix_3.8-4      xml2_1.4.0         splines_4.5.1      lattice_0.22-7     TH.data_1.1-4      R6_2.6.1           commonmark_2.0.0   generics_0.1.4    
+# [17] Formula_1.2-5      tibble_3.3.0       car_3.1-3          pillar_1.11.0      RColorBrewer_1.1-3 multcomp_1.4-28    stringi_1.8.7      xfun_0.53         
+# [25] litedown_0.7       S7_0.2.0           cli_3.6.5          withr_3.0.2        magrittr_2.0.3     gridtext_0.1.5     grid_4.5.1         rstudioapi_0.17.1 
+# [33] mvtnorm_1.3-3      markdown_2.0       sandwich_3.1-1     lifecycle_1.0.4    vctrs_0.6.5        glue_1.8.0         farver_2.1.2       codetools_0.2-20  
+# [41] zoo_1.8-14         survival_3.8-3     abind_1.4-8        carData_3.0-5      tools_4.5.1        pkgconfig_2.0.3
