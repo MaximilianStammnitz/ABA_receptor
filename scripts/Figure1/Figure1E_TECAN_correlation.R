@@ -1,7 +1,7 @@
 # The genetic architecture of an allosteric hormone receptor
 # Maximilian R. Stammnitz & Ben Lehner
 # bioRxiv link: https://www.biorxiv.org/content/10.1101/2025.05.30.656975v1
-# 21.10.2025
+# 22.10.2025
 # © M.R.S. (maximilian.stammnitz@crg.eu)
 
 ###############################################
@@ -368,9 +368,9 @@ pdf("../../results/Figure1/Figure1E_individual_mutant_correlation.pdf",
     height = 15, width = 18)
 
 out.1E <- ggplot(out.tecan.df, aes(x = `tecan`, y = `competition`)) +
-  scale_x_continuous(breaks = seq(f = 0, t = 100, length.out = 6), limits = c(-1000, 2000)) +
-  scale_y_continuous(breaks = seq(f = 0, t = 100, length.out = 6), limits = c(-1000, 2000)) +
-  coord_cartesian(xlim = c(-21, 121), ylim = c(-21, 121)) +
+  scale_x_continuous(breaks = seq(f = 0, t = 100, length.out = 6), limits = c(-1000, 1000)) +
+  scale_y_continuous(breaks = seq(f = 0, t = 100, length.out = 6), limits = c(-1000, 1000)) +
+  coord_cartesian(xlim = c(-5, 121), ylim = c(-5, 115)) +
   geom_smooth(out.tecan.df,
               mapping = aes(x = `tecan`, y = `competition`),
               method = 'lm',
@@ -393,8 +393,8 @@ out.1E <- ggplot(out.tecan.df, aes(x = `tecan`, y = `competition`)) +
              color = "black", size = 5, shape = 21, stroke = 0.5) +
   scale_fill_gradient(low = "white", high = "darkgreen") +
   annotate("text",
-           x = -15,
-           y = 109,
+           x = 0,
+           y = 105,
            label = expr_text(bquote(italic(r) == .(format(r, digits = 2)))),
            parse = T,
            hjust = 0, size = 25, color = "black") +
@@ -410,8 +410,8 @@ out.1E <- ggplot(out.tecan.df, aes(x = `tecan`, y = `competition`)) +
         legend.position = "none",
         text = element_text(family="Helvetica"),
         plot.margin = unit(c(2, 2, 2, 2),"cm")) +
-  labs(x = "Relative PYL1/ABI1 Binding (Individual Mutants)",
-       y = "Relative PYL1/ABI1 Binding (Library)")
+  labs(x = "Relative PYL1/ABI1 Binding (individual mutants)",
+       y = "Relative PYL1/ABI1 Binding (library)")
 
 print(out.1E)
 
