@@ -1,7 +1,7 @@
 # The genetic architecture of an allosteric hormone receptor
 # Maximilian R. Stammnitz & Ben Lehner
 # bioRxiv link: https://www.biorxiv.org/content/10.1101/2025.05.30.656975v1
-# 21.10.2025
+# 22.10.2025
 # © M.R.S. (maximilian.stammnitz@crg.eu)
 
 #############################################
@@ -33,17 +33,15 @@ load("../../data/DiMSum/PYL1-ABI1/PYL1-ABI1_preprocessed.RData")
 PYL1.ABI1.WT <- lapply(PYL1.ABI1, function(x){y <- x[which(x[,"Nham_aa"] == 0),]; return(y)})
 
 ## Build a dose-response matrix for each nucleotide sequence
-PYL1.ABI1.WT.mat <- PYL1.ABI1.WT.sigma.mat <- matrix(NA, ncol = 12, nrow = length(unique(do.call(c, sapply(PYL1.ABI1.WT, function(x){x$nt_seq})))))
-colnames(PYL1.ABI1.WT.mat) <- colnames(PYL1.ABI1.WT.sigma.mat) <- names(PYL1.ABI1.WT)
-rownames(PYL1.ABI1.WT.mat) <- rownames(PYL1.ABI1.WT.sigma.mat) <- unique(do.call(c, sapply(PYL1.ABI1.WT, function(x){x$nt_seq})))
+PYL1.ABI1.WT.mat <- matrix(NA, ncol = 12, nrow = length(unique(do.call(c, sapply(PYL1.ABI1.WT, function(x){x$nt_seq})))))
+colnames(PYL1.ABI1.WT.mat) <- names(PYL1.ABI1.WT)
+rownames(PYL1.ABI1.WT.mat) <- unique(do.call(c, sapply(PYL1.ABI1.WT, function(x){x$nt_seq})))
 for(i in 1:12){
   PYL1.ABI1.WT.mat[,i] <- PYL1.ABI1.WT[[i]][match(rownames(PYL1.ABI1.WT.mat), PYL1.ABI1.WT[[i]]$nt_seq),"gr_normalised_WTscaled"]
-  PYL1.ABI1.WT.sigma.mat[,i] <- PYL1.ABI1.WT[[i]][match(rownames(PYL1.ABI1.WT.sigma.mat), PYL1.ABI1.WT[[i]]$nt_seq),"gr_sigma_normalised_WTscaled"]
 }
 
 ## Remove synonymous variants not fully covered across (+)-ABA concentrations
 PYL1.ABI1.WT.mat <- na.omit(PYL1.ABI1.WT.mat)
-PYL1.ABI1.WT.sigma.mat <- na.omit(PYL1.ABI1.WT.sigma.mat)
 
 ## Clean up environment
 rm(packages, install_if_missing, i)
@@ -53,13 +51,12 @@ rm(packages, install_if_missing, i)
 #######################################
 
 ## Fit curves using the DRC packages
-WT.PYL1.drc <- cbind(PYL1.ABI1.WT.mat[1,],PYL1.ABI1.WT.sigma.mat[1,],colnames(PYL1.ABI1.WT.mat))
+WT.PYL1.drc <- cbind(PYL1.ABI1.WT.mat[1,],colnames(PYL1.ABI1.WT.mat))
 class(WT.PYL1.drc) <- "numeric"
 WT.PYL1.drc <- as.data.frame(WT.PYL1.drc)
-colnames(WT.PYL1.drc) <- c("B", "B sigma", "concentration")
+colnames(WT.PYL1.drc) <- c("B", "concentration")
 
 WT.PYL1.drc <- drm(WT.PYL1.drc$B ~ WT.PYL1.drc$concentration,
-                   weights = 1/WT.PYL1.drc$`B sigma`,
                    fct = LL.4(fixed = c(NA, NA, NA, NA), names = c("Hill", "B[0]", "B[inf]", "EC50")),
                    type = 'continuous',
                    lowerl = c(NA, 0, NA, NA))
@@ -90,7 +87,7 @@ PYL1.ABI1.WT.curves <- as.data.frame(PYL1.ABI1.WT.curves)
 ## Display data points only for the main (exact) WT sequence
 PYL1.ABI1.WT.mat.exact <- cbind("conc" = as.numeric(colnames(PYL1.ABI1.WT.mat)),
                                 "WT" = as.numeric(PYL1.ABI1.WT.mat[PYL1.ABI1.WT$`2500`[which(PYL1.ABI1.WT$`2500`$WT == T)[1],"nt_seq"],]),
-                                "sigma" = as.numeric(PYL1.ABI1.WT.sigma.mat[PYL1.ABI1.WT$`2500`[which(PYL1.ABI1.WT$`2500`$WT == T)[1],"nt_seq"],]))
+                                "WT sigma" = as.numeric(apply(PYL1.ABI1.WT.mat, 2, sd)))
 PYL1.ABI1.WT.mat.exact[12,1] <- 9.062741e-03/3.5/3.5/3.5 ## "0-conc." positioning for log scale
 PYL1.ABI1.WT.mat.exact <- as.data.frame(PYL1.ABI1.WT.mat.exact)
 
@@ -101,20 +98,20 @@ tss <- sum((WT.PYL1.drc$data$`WT.PYL1.drc$B` - mean(WT.PYL1.drc$data$`WT.PYL1.dr
 r_squared <- 1 - (rss/tss)
 
 ## Visualise the main WT dose-response curve, including the confidence interval ribbon
-pdf("../../results/Figure1/Figure1D_WT_main_dose_response_curve.pdf",
+pdf("../../results/Figure1/Figure1D_WT_main_dose_response_curve_v2.pdf",
     height = 15, width = 18)
 
 out.1D <- ggplot(data = PYL1.ABI1.WT.curves) +
   geom_ribbon(data = WT.drc.predict.newdata, aes(x = conc, y = p, ymin = pmin, ymax = pmax),
               alpha = 0.2, fill = "grey50") +
+  geom_errorbar(data = PYL1.ABI1.WT.mat.exact,
+                aes(x = conc,
+                    ymin = `WT` - `WT sigma` * 1.96,
+                    ymax = `WT` + `WT sigma` * 1.96),
+                color = "black", width = 0, linewidth = 1) +
+  geom_line(data = PYL1.ABI1.WT.curves, aes(x = conc, y = B), linewidth = 1.5) +
   geom_point(data = PYL1.ABI1.WT.mat.exact, aes(x = conc, y = WT),
              color = "black", size = 10, shape = 16) +
-  geom_line(data = PYL1.ABI1.WT.curves, aes(x = conc, y = B), linewidth = 1.5) +
-#  geom_errorbar(data = PYL1.ABI1.WT.mat.exact, 
-#                aes(x = conc, 
-#                    ymin = `WT` - `sigma` * 1.96, 
-#                    ymax = `WT` + `sigma` * 1.96),
-#                color = "black", linewidth = 0.5) +
   scale_x_log10(breaks = c(9.062741e-03/3.5/3.5/3.5, 0.01, 0.1, 1, 10, 100, 1000),
                 labels = c(0, 0.01, 0.1, 1, 10, 100, "1,000"),
                 limits = c(9.062741e-03/3.5/3.5/3.5, 5000)) +
