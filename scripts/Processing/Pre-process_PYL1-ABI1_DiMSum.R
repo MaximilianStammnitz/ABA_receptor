@@ -256,8 +256,7 @@ colnames(WT.PYL1.drc) <- c("GR", "GR sigma", "concentration")
 WT.PYL1.drc <- drm(WT.PYL1.drc$GR ~ WT.PYL1.drc$concentration,
                    weights = 1/WT.PYL1.drc$`GR sigma`,
                    fct = LL.4(fixed = c(NA, NA, NA, NA), names = c("Hill", "B[0]", "B[inf]", "EC50")),
-                   type = 'continuous',
-                   lowerl = c(NA, 0, NA, NA))
+                   type = 'continuous')
 WT.PYL1.drc.par <- WT.PYL1.drc$fit$par
 names(WT.PYL1.drc.par) <- c("Hill", "B[0]", "B[inf]", "EC50")
 WT.PYL1.drc.par <- WT.PYL1.drc.par[c(2:4,1)]
