@@ -1,7 +1,7 @@
 # The genetic architecture of an allosteric hormone receptor
 # Maximilian R. Stammnitz & Ben Lehner
 # bioRxiv link: https://www.biorxiv.org/content/10.1101/2025.05.30.656975v1
-# 31.05.2025
+# 22.10.2025
 # © M.R.S. (maximilian.stammnitz@crg.eu)
 
 #############################################
@@ -13,7 +13,7 @@
 ####################
 
 ## Libraries
-packages <- c("reshape", "ggplot2", "ggtext")
+packages <- c("reshape", "ggplot2", "ggtext", "rlang")
 
 ## Install missing packages
 install_if_missing <- function(pkg) {if (!requireNamespace(pkg, quietly = TRUE)) install.packages(pkg)}
@@ -57,19 +57,22 @@ out.1A <- ggplot(curve[1:958,], aes(x = conc, y = out)) +
   annotate("text", 
            x = 4900, 
            y = 0, 
-           label = bquote(italic(B[0])), 
+           label = expr_text(bquote(italic(B[0]))),
+           parse = T,
            color = "black",
            size = 23) +
   annotate("text", 
          x = 4900, 
          y = 100, 
-         label = bquote(italic(B[infinity])),
+         label = expr_text(bquote(italic(B[infinity]))),
+         parse = T,
          color = "black",
          size = 23) +
   annotate("text", 
            x = 1, 
            y = 120, 
-           label = bquote(italic(EC[50])), 
+           label = expr_text(bquote(italic(EC[50]))),
+           parse = T,
            vjust = 1, 
            color = "black",
            size = 23) +
@@ -103,13 +106,13 @@ dev.off()
 ################
 
 # sessionInfo()
-# R version 4.4.1 (2024-06-14)
+# R version 4.5.1 (2025-06-13)
 # Platform: aarch64-apple-darwin20
 # Running under: macOS Sonoma 14.6.1
 # 
 # Matrix products: default
 # BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib 
-# LAPACK: /Library/Frameworks/R.framework/Versions/4.4-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.0
+# LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
 # 
 # locale:
 # [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
@@ -121,11 +124,11 @@ dev.off()
 # [1] stats     graphics  grDevices utils     datasets  methods   base     
 # 
 # other attached packages:
-# [1] ggtext_0.1.2  ggplot2_3.5.1 reshape_0.8.9
+# [1] rlang_1.1.6    ggtext_0.1.2   ggplot2_4.0.0  reshape_0.8.10
 # 
 # loaded via a namespace (and not attached):
-# [1] R6_2.6.1          tidyselect_1.2.1  farver_2.1.2      magrittr_2.0.3    gtable_0.3.6      glue_1.8.0       
-# [7] tibble_3.2.1      pkgconfig_2.0.3   generics_0.1.3    dplyr_1.1.4       lifecycle_1.0.4   xml2_1.3.6       
-# [13] cli_3.6.4         scales_1.3.0      grid_4.4.1        vctrs_0.6.5       withr_3.0.2       compiler_4.4.1   
-# [19] plyr_1.8.9        rstudioapi_0.17.1 tools_4.4.1       pillar_1.10.1     munsell_0.5.1     Rcpp_1.0.14      
-# [25] colorspace_2.1-1  crayon_1.5.3      rlang_1.1.5       gridtext_0.1.5  
+# [1] RColorBrewer_1.1-3 R6_2.6.1           tidyselect_1.2.1   farver_2.1.2       magrittr_2.0.3     gtable_0.3.6      
+# [7] glue_1.8.0         tibble_3.3.0       pkgconfig_2.0.3    generics_0.1.4     dplyr_1.1.4        lifecycle_1.0.4   
+# [13] xml2_1.4.0         cli_3.6.5          S7_0.2.0           scales_1.4.0       grid_4.5.1         vctrs_0.6.5       
+# [19] withr_3.0.2        compiler_4.5.1     plyr_1.8.9         rstudioapi_0.17.1  tools_4.5.1        pillar_1.11.0     
+# [25] Rcpp_1.1.0         crayon_1.5.3       gridtext_0.1.5
