@@ -1,7 +1,7 @@
 # The genetic architecture of an allosteric hormone receptor
 # Maximilian R. Stammnitz & Ben Lehner
 # bioRxiv link: https://www.biorxiv.org/content/10.1101/2025.05.30.656975v1
-# 21.10.2025
+# 22.10.2025
 # © M.R.S. (maximilian.stammnitz@crg.eu)
 
 #############################################
@@ -235,26 +235,22 @@ names(PYL1.ABI1) <- dosages
 PYL1.ABI1.WT <- lapply(PYL1.ABI1, function(x){y <- x[which(x[,"Nham_aa"] == 0),]; return(y)})
 
 ## Build a dose-response (and error) matrix for each nucleotide sequence
-PYL1.ABI1.WT.mat <- PYL1.ABI1.WT.sigma.mat <- matrix(NA, ncol = 12, nrow = length(unique(do.call(c, sapply(PYL1.ABI1.WT, function(x){x$nt_seq})))))
-colnames(PYL1.ABI1.WT.mat) <- colnames(PYL1.ABI1.WT.sigma.mat) <- names(PYL1.ABI1.WT)
-rownames(PYL1.ABI1.WT.mat) <- rownames(PYL1.ABI1.WT.sigma.mat) <- unique(do.call(c, sapply(PYL1.ABI1.WT, function(x){x$nt_seq})))
+PYL1.ABI1.WT.mat <- matrix(NA, ncol = 12, nrow = length(unique(do.call(c, sapply(PYL1.ABI1.WT, function(x){x$nt_seq})))))
+colnames(PYL1.ABI1.WT.mat) <- names(PYL1.ABI1.WT)
+rownames(PYL1.ABI1.WT.mat) <- unique(do.call(c, sapply(PYL1.ABI1.WT, function(x){x$nt_seq})))
 for(i in 1:12){
   PYL1.ABI1.WT.mat[,i] <- PYL1.ABI1.WT[[i]][match(rownames(PYL1.ABI1.WT.mat), PYL1.ABI1.WT[[i]]$nt_seq),"gr_normalised"]
-  PYL1.ABI1.WT.sigma.mat[,i] <- PYL1.ABI1.WT[[i]][match(rownames(PYL1.ABI1.WT.mat), PYL1.ABI1.WT[[i]]$nt_seq),"gr_sigma_normalised"]
 }
 
 ## Remove synonymous variants not fully covered across (+)-ABA concentrations
 PYL1.ABI1.WT.mat <- na.omit(PYL1.ABI1.WT.mat)
-PYL1.ABI1.WT.sigma.mat <- na.omit(PYL1.ABI1.WT.sigma.mat)
 
 ## Generate the dose response curve of the (nucleotide-level) WT
-WT.PYL1.drc <- cbind(PYL1.ABI1.WT.mat[1,],PYL1.ABI1.WT.sigma.mat[1,],colnames(PYL1.ABI1.WT.mat))
+WT.PYL1.drc <- cbind(PYL1.ABI1.WT.mat[1,],colnames(PYL1.ABI1.WT.mat))
 class(WT.PYL1.drc) <- "numeric"
 WT.PYL1.drc <- as.data.frame(WT.PYL1.drc)
-colnames(WT.PYL1.drc) <- c("GR", "GR sigma", "concentration")
-
+colnames(WT.PYL1.drc) <- c("GR", "concentration")
 WT.PYL1.drc <- drm(WT.PYL1.drc$GR ~ WT.PYL1.drc$concentration,
-                   weights = 1/WT.PYL1.drc$`GR sigma`,
                    fct = LL.4(fixed = c(NA, NA, NA, NA), names = c("Hill", "B[0]", "B[inf]", "EC50")),
                    type = 'continuous')
 WT.PYL1.drc.par <- WT.PYL1.drc$fit$par
