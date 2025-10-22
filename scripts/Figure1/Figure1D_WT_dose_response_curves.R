@@ -112,8 +112,8 @@ out.1D <- ggplot(data = PYL1.ABI1.WT.curves) +
   geom_line(data = PYL1.ABI1.WT.curves, aes(x = conc, y = B), linewidth = 1.5) +
 #  geom_errorbar(data = PYL1.ABI1.WT.mat.exact, 
 #                aes(x = conc, 
-#                    ymin = PYL1.ABI1.WT.mat.exact$WT - PYL1.ABI1.WT.mat.exact$sigma * 1.96, 
-#                    ymax = PYL1.ABI1.WT.mat.exact$WT + PYL1.ABI1.WT.mat.exact$sigma * 1.96),
+#                    ymin = `WT` - `sigma` * 1.96, 
+#                    ymax = `WT` + `sigma` * 1.96),
 #                color = "black", linewidth = 0.5) +
   scale_x_log10(breaks = c(9.062741e-03/3.5/3.5/3.5, 0.01, 0.1, 1, 10, 100, 1000),
                 labels = c(0, 0.01, 0.1, 1, 10, 100, "1,000"),
