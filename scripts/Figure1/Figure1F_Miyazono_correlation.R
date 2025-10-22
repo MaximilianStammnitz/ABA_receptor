@@ -118,8 +118,8 @@ r <- cor(x = out.miya.10uM.df$miyazono,
 pdf("../../results/Figure1/Figure1F_Miyazono_correlation.pdf", height = 15, width = 18)
  
 out.1F <- ggplot(out.miya.10uM.df, aes(x = `miyazono`, y = `10 µM mean`)) +
-  scale_x_continuous(breaks = seq(f = 0, t = 100, length.out = 6), limits = c(-100, 200)) +
-  scale_y_continuous(breaks = seq(f = 0, t = 100, length.out = 6), limits = c(-100, 200)) +
+  scale_x_continuous(breaks = seq(f = 0, t = 100, length.out = 6), limits = c(-1000, 1000)) +
+  scale_y_continuous(breaks = seq(f = 0, t = 100, length.out = 6), limits = c(-1000, 1000)) +
   coord_cartesian(xlim = c(-5, 121), ylim = c(-5, 115)) +
   geom_smooth(out.miya.10uM.df,
               mapping = aes(x = `miyazono`, y = `10 µM mean`),
