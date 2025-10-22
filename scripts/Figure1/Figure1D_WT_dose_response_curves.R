@@ -66,7 +66,6 @@ WT.PYL1.drc.par <- WT.PYL1.drc.par[c(2:4,1)]
 WT.PYL1.drc.par[4] <- -WT.PYL1.drc.par[4]
 
 ## Predict the full, smoothened curve (using 1000 data points) and confidence interval
-WT.PYL1.drc$concentration[12] <- 9.062741e-03/3.5/3.5/3.5 ## "0-conc." positioning for log scale
 WT.drc.predict.newdata <- expand.grid(conc = c(0, exp(seq(log(0.001), log(5000), length = 999))))
 WT.PYL1.drc.predict <- predict(WT.PYL1.drc,
                                newdata = WT.drc.predict.newdata,
