@@ -1,7 +1,7 @@
 # The genetic architecture of an allosteric hormone receptor
 # Maximilian R. Stammnitz & Ben Lehner
 # bioRxiv link: https://www.biorxiv.org/content/10.1101/2025.05.30.656975v1
-# 22.10.2025
+# 23.10.2025
 # © M.R.S. (maximilian.stammnitz@crg.eu)
 
 #########################################################
@@ -35,18 +35,18 @@ PYL1.ABI1 <- lapply(PYL1.ABI1, function(x){x <- x[-which(x$WT == T & x$nt_seq !=
 
 ## Summarise WT-rescaled binding fitness for each variant vs. ABA combination
 ## Matrix format
-PYL1.ABI1.summary <- PYL1.ABI1.sigma.summary <- matrix(NA, nrow = 177*21, ncol = 12)
-colnames(PYL1.ABI1.summary) <- colnames(PYL1.ABI1.sigma.summary) <- names(PYL1.ABI1)
+PYL1.ABI1.summary <- matrix(NA, nrow = 177*21, ncol = 12)
+colnames(PYL1.ABI1.summary) <- names(PYL1.ABI1)
 ids <- c()
 for(i in 1:177){
   tmp.pos <- rep(str_split_fixed(PYL1.ABI1$`2500`[which(PYL1.ABI1$`2500`$WT)[1],"aa_seq"], "", 177)[i], 21)
   ids <- c(ids, paste0(tmp.pos, i + 32))
 }
-rownames(PYL1.ABI1.summary) <- rownames(PYL1.ABI1.sigma.summary) <- paste0(ids, rep(c("G", "A", "V", "L", "M",
-                                                                                      "I", "F", "Y", "W", "K",
-                                                                                      "R", "H", "D", "E", "S",
-                                                                                      "T", "C", "N", "Q", "P",
-                                                                                      "*"),177))
+rownames(PYL1.ABI1.summary) <- paste0(ids, rep(c("G", "A", "V", "L", "M",
+                                                 "I", "F", "Y", "W", "K",
+                                                 "R", "H", "D", "E", "S",
+                                                 "T", "C", "N", "Q", "P",
+                                                 "*"),177))
 
 ## Fill
 WT <- str_split_fixed(PYL1.ABI1$`2500`[which(PYL1.ABI1$`2500`$WT)[1],"aa_seq"],"",177)[1,]
@@ -60,7 +60,6 @@ for(j in 1:length(PYL1.ABI1)){
     if(all(tmp.vars[i,] == WT)){
       
       PYL1.ABI1.summary[paste0(WT, 33:209, WT),j] <- PYL1.ABI1[[j]][i,"gr_normalised_WTscaled"]
-      PYL1.ABI1.sigma.summary[paste0(WT, 33:209, WT),j] <- PYL1.ABI1[[j]][i,"gr_sigma_normalised_WTscaled"]
       next
       
     }
@@ -77,7 +76,6 @@ for(j in 1:length(PYL1.ABI1)){
     ### otherwise obtain the corresponding fitness
     tmp.mut <- paste0(WT[pos.mut], pos.mut + 32, tmp.vars[i,pos.mut])
     PYL1.ABI1.summary[tmp.mut,j] <- PYL1.ABI1[[j]][i,"gr_normalised_WTscaled"]
-    PYL1.ABI1.sigma.summary[tmp.mut,j] <- PYL1.ABI1[[j]][i,"gr_sigma_normalised_WTscaled"]
     
   }
   
@@ -87,10 +85,8 @@ rm(i,j,tmp.vars,ids,pos.mut,tmp.mut,tmp.pos)
 ## Subset genotypes to only occur once (i.e. only one WT)
 WTs.pos <- match(paste0(WT, 33:209, WT), rownames(PYL1.ABI1.summary))
 PYL1.ABI1.summary.nonWT <- PYL1.ABI1.summary[-WTs.pos[-1],]
-PYL1.ABI1.sigma.summary.nonWT <- PYL1.ABI1.sigma.summary[-WTs.pos[-1],]
 PYL1.ABI1.summary.nonWT <- PYL1.ABI1.summary.nonWT[c(WTs.pos[1],1:c(WTs.pos[1]-1),c(WTs.pos[1]+1):nrow(PYL1.ABI1.summary.nonWT)),]
-PYL1.ABI1.sigma.summary.nonWT <- PYL1.ABI1.sigma.summary.nonWT[c(WTs.pos[1],1:c(WTs.pos[1]-1),c(WTs.pos[1]+1):nrow(PYL1.ABI1.sigma.summary.nonWT)),]
-rownames(PYL1.ABI1.summary.nonWT)[1] <- rownames(PYL1.ABI1.sigma.summary.nonWT)[1] <- "WT"
+rownames(PYL1.ABI1.summary.nonWT)[1] <- "WT"
 
 
 ## 2. Calculate and plot (+)-ABA dose-response curves using the Hill equation ##
@@ -124,17 +120,15 @@ for(i in 1:nrow(parameters.Hill)){
 
   ### fetch genotype's data
   drc.summary.tmp <- cbind(PYL1.ABI1.summary.nonWT[i,],
-                           PYL1.ABI1.sigma.summary.nonWT[i,],
                            colnames(PYL1.ABI1.summary.nonWT))
   class(drc.summary.tmp) <- "numeric"
   drc.summary.tmp <- as.data.frame(drc.summary.tmp)
-  colnames(drc.summary.tmp) <- c("binding", "binding sigma", "concentration")
+  colnames(drc.summary.tmp) <- c("binding", "concentration")
 
   ### freely estimate the wildtype parameters, used to initialise runs for PYL1 mutants
   if(i == 1){
 
     WT.PYL1.drc.Hill <- drm(drc.summary.tmp$binding ~ drc.summary.tmp$concentration,
-                            weights = 1/drc.summary.tmp$`binding sigma`,
                             fct = LL.4(fixed = c(NA, NA, NA, NA),
                                        names = c("Hill", "B[0]", "B[inf]", "EC50")),
                             type = 'continuous')
@@ -153,7 +147,6 @@ for(i in 1:nrow(parameters.Hill)){
   tryCatch({
 
     tmp.PYL1.drc.Hill <- drm(drc.summary.tmp$binding ~ drc.summary.tmp$concentration,
-                             weights = 1/drc.summary.tmp$`binding sigma`,                             
                              fct = LL.4(fixed = c(NA, NA, NA, NA), names = c("Hill", "B[0]", "B[inf]", "EC50")),
                              type = 'continuous', start = par.WT.PYL1.drc.Hill)},
     error = function(e){skip_to_next <<- TRUE})
@@ -209,7 +202,7 @@ for(i in 1:nrow(parameters.Hill)){
                           labels = c(0, 0.01, 0.1, 1, 10, 100, "1,000"),
                           limits = c(9.062741e-03/3.5/3.5/3.5, 5000)) +
             scale_y_continuous(breaks = seq(from = 0, to = 100, length.out = 6), limits = c(-5, 115)) +
-            coord_cartesian(ylim = c(-5, 115)) +
+            coord_cartesian(ylim = c(-15, 115)) +
             annotate("text",
                      x = 9.062741e-03/3.5/3.5/3.5,
                      y = 105,
