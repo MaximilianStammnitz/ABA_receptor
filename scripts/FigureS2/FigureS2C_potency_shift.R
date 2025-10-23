@@ -1,7 +1,7 @@
 # The genetic architecture of an allosteric hormone receptor
 # Maximilian R. Stammnitz & Ben Lehner
 # bioRxiv link: https://www.biorxiv.org/content/10.1101/2025.05.30.656975v1
-# 31.05.2025
+# 23.10.2025
 # © M.R.S. (maximilian.stammnitz@crg.eu)
 
 ############################################################################
@@ -13,7 +13,7 @@
 ####################
 
 ## Libraries
-packages <- c("drc", "ggrepel", "ggplot2", "ggtext")
+packages <- c("drc", "ggrepel", "ggplot2", "ggtext", "rlang")
 
 ## Install missing packages
 install_if_missing <- function(pkg) {if (!requireNamespace(pkg, quietly = TRUE)) install.packages(pkg)}
@@ -68,7 +68,6 @@ for (i in 1:length(PYL1.ABI1.ls)){
   tmp.drc.par[4] <- -tmp.drc.par[4]
   
   ## Predict binding across 1000 concentrations
-  tmp.drc$concentration[12] <- 9.062741e-03/3.5/3.5/3.5 ## "0-conc." positioning for log scale
   tmp.drc.predict.newdata <- expand.grid(conc = c(0, exp(seq(log(0.001), log(5000), length = 999))))
   tmp.drc.predict <- predict(tmp.drc,
                              newdata = tmp.drc.predict.newdata,
@@ -114,8 +113,8 @@ out.cor <- as.data.frame(out.cor)
 ## ggPlots
 pdf("../../results/FigureS2/FigureS2C_potency_shift.pdf", height = 15, width = 1.130682*18)
 
-out.S2C <- ggplot(out.cor, aes(x = `conc`, y = `corr`)) +
-  geom_line(data = out.cor,
+out.S2C <- ggplot(out.cor[-1,], aes(x = `conc`, y = `corr`)) +
+  geom_line(data = out.cor[-1,],
              mapping = aes(x = `conc`, y = `corr`),
              color = "black", size = 3) +
   scale_x_log10(breaks = c(9.062741e-03/3.5/3.5/3.5, 0.01, 0.1, 1, 10, 100, 1000),
@@ -125,13 +124,14 @@ out.S2C <- ggplot(out.cor, aes(x = `conc`, y = `corr`)) +
   coord_cartesian(ylim = c(0, 1)) +
   geom_segment(aes(x = 10,
                    xend = 10,
-                   y = out.cor[598,2] + 0.015, 
-                   yend = out.cor[598,2] + 0.035),
+                   y = out.cor[which.min(abs(out.cor$conc - 10)),2] + 0.015, 
+                   yend = out.cor[which.min(abs(out.cor$conc - 10)),2] + 0.035),
                size = 1, color = "black") +
   annotate("text", 
            x = 10, 
-           y = out.cor[598,2] + 0.1, 
-           label = bquote(italic(r[obs.])), 
+           y = out.cor[which.min(abs(out.cor$conc - 10)),2] + 0.1, 
+           label = expr_text(bquote(italic(r[obs.]))), 
+           parse = T,
            vjust = 1, 
            color = "black",
            size = 20) +
@@ -143,7 +143,8 @@ out.S2C <- ggplot(out.cor, aes(x = `conc`, y = `corr`)) +
   annotate("text",
            x = out.cor[which.max(out.cor[,2]),1],
            y = out.cor[which.max(out.cor[,2]),2] + 0.1,
-           label = bquote(italic(r[max.])),
+           label = expr_text(bquote(italic(r[max.]))),
+           parse = T,
            vjust = 1,
            color = "black",
            size = 20) +
@@ -160,7 +161,7 @@ out.S2C <- ggplot(out.cor, aes(x = `conc`, y = `corr`)) +
         text = element_text(family="Helvetica"),
         plot.margin = unit(c(2, 2, 2, 2),"cm")) +
   labs(x = "(+)-ABA conc. (µM)",
-       y = expression("Pearson's r (iPCA vs. 10 µM" ~ italic("in vitro") ~ ")"))
+       y = expression("Pearson's r (GluePCA vs. 10 µM" ~ italic("in vitro") ~ ")"))
 
 print(out.S2C)
 
@@ -170,7 +171,7 @@ dev.off()
 ## 4. Small-scale plots for robs and rmax ##
 ############################################
 
-### Re-calculate two dose-response curves: for 10 µM (observed) and for 116.9117 µM (theoretical max. r)
+### Re-calculate two dose-response curves: for 10 µM (observed) and for 136.45266 µM (theoretical max. r)
 PYL1.ABI1.two <- vector(mode = "list", length = nrow(PYL1.ABI1.mat))
 names(PYL1.ABI1.two) <- rownames(PYL1.ABI1.mat)
 
@@ -193,8 +194,7 @@ for (i in 1:length((PYL1.ABI1.two))){
   tmp.drc.par[4] <- -tmp.drc.par[4]
   
   ## Predict binding at 10 µM
-  tmp.drc$concentration[12] <- 9.062741e-03/3.5/3.5/3.5 ## "0-conc." positioning for log scale
-  tmp.drc.predict.newdata <- expand.grid(conc = c(10, 116.9117))
+  tmp.drc.predict.newdata <- expand.grid(conc = c(10, 136.45266))
   tmp.drc.predict <- predict(tmp.drc,
                              newdata = tmp.drc.predict.newdata,
                              interval = "confidence")
@@ -207,21 +207,21 @@ for (i in 1:length((PYL1.ABI1.two))){
 
 ### Stratify & set relative to WT
 PYL1.ABI1.two <- do.call(rbind, PYL1.ABI1.two)
-colnames(PYL1.ABI1.two) <- c(10, 116.9117)
+colnames(PYL1.ABI1.two) <- c(10, 136.45266)
 PYL1.ABI1.two <- apply(PYL1.ABI1.two, 2, function(x){y <- 100*x[1:12]/x[13]; return(y)})
 
 out.miya.10uM.df <- as.data.frame(cbind("miyazono" = miyazono, "10 µM" = PYL1.ABI1.two[,"10"]))
-out.miya.116uM.df <- as.data.frame(cbind("miyazono" = miyazono, "116 µM" = PYL1.ABI1.two[,"116.9117"]))
+out.miya.136uM.df <- as.data.frame(cbind("miyazono" = miyazono, "136 µM" = PYL1.ABI1.two[,"136.45266"]))
 r.10 <- cor(x = out.miya.10uM.df$miyazono, y = out.miya.10uM.df$`10 µM`, method = "pearson")
-r.116 <- cor(x = out.miya.116uM.df$miyazono, y = out.miya.116uM.df$`116 µM`, method = "pearson")
+r.136 <- cor(x = out.miya.136uM.df$miyazono, y = out.miya.136uM.df$`136 µM`, method = "pearson")
 
 out.S2C_obs <- ggplot(out.miya.10uM.df, aes(x = `miyazono`, y = `10 µM`)) +
-  scale_x_continuous(breaks = seq(f = 0, t = 100, length.out = 6), limits = c(-100, 200)) +
-  scale_y_continuous(breaks = seq(f = 0, t = 100, length.out = 6), limits = c(-100, 200)) +
+  scale_x_continuous(breaks = seq(f = 0, t = 100, length.out = 6), limits = c(-1000, 1000)) +
+  scale_y_continuous(breaks = seq(f = 0, t = 100, length.out = 6), limits = c(-1000, 1000)) +
   coord_cartesian(xlim = c(-5, 121), ylim = c(-5, 115)) +
   geom_point(data = out.miya.10uM.df,
              mapping = aes(x = `miyazono`, y = `10 µM`),
-             color = "black", size = 18) +
+             color = "black", size = 16, shape = 16) +
   geom_smooth(out.miya.10uM.df,
               mapping = aes(x = `miyazono`, y = `10 µM`),
               method = 'lm',
@@ -231,7 +231,8 @@ out.S2C_obs <- ggplot(out.miya.10uM.df, aes(x = `miyazono`, y = `10 µM`)) +
   annotate("text",
            x = -5,
            y = 105,
-           label = bquote(italic(r) == .(format(r.10, digits = 2))),
+           label = expr_text(bquote(italic(r) == .(format(r.10, digits = 2)))),
+           parse = T,
            hjust = 0, size = 35, color = "black") +
   theme_classic(base_size = 50) +
   theme(plot.title = element_markdown(),
@@ -240,27 +241,27 @@ out.S2C_obs <- ggplot(out.miya.10uM.df, aes(x = `miyazono`, y = `10 µM`)) +
         axis.text = element_text(size = 40),
         axis.line.x = element_line(size = 1, color = 'black'),
         axis.line.y = element_line(size = 1, color = 'black'),
-        axis.title.x = element_text(family = 'Helvetica', colour = 'black', size = 50, vjust = -1),
-        axis.title.y = element_text(family = 'Helvetica', colour = 'black', size = 50, vjust = 3),
+        axis.title.x = element_text(family = 'Helvetica', colour = 'black', size = 40, vjust = -1),
+        axis.title.y = element_text(family = 'Helvetica', colour = 'black', size = 40, vjust = 3),
         legend.position = "none",
         text = element_text(family="Helvetica"),
         plot.margin = unit(c(2, 2, 2, 2),"cm")) +
-  labs(x = "Binding (Miyazono et al., Nature 2009)",
-       y = "Binding (this study, 10 µM)")
+  labs(x = "Relative PYL1/ABI1 Binding (Miyazono et al., 2009)",
+       y = "Relative PYL1/ABI1 Binding (this study, 10 µM)")
 
-pdf("../../results/FigureS2/FigureS2C_potency_shift_obs.pdf", height = 15, width = 18)
+pdf("../../results/FigureS2/FigureS2C_potency_shift_obs_v2.pdf", height = 15, width = 18)
 print(out.S2C_obs)
 dev.off()
 
-out.S2C_theormax <- ggplot(out.miya.116uM.df, aes(x = `miyazono`, y = `116 µM`)) +
+out.S2C_theormax <- ggplot(out.miya.136uM.df, aes(x = `miyazono`, y = `136 µM`)) +
   scale_x_continuous(breaks = seq(f = 0, t = 100, length.out = 6), limits = c(-100, 200)) +
   scale_y_continuous(breaks = seq(f = 0, t = 100, length.out = 6), limits = c(-100, 200)) +
   coord_cartesian(xlim = c(-5, 121), ylim = c(-5, 115)) +
-  geom_point(data = out.miya.116uM.df,
-             mapping = aes(x = `miyazono`, y = `116 µM`),
-             color = "black", size = 18) +
-  geom_smooth(out.miya.116uM.df,
-              mapping = aes(x = `miyazono`, y = `116 µM`),
+  geom_point(data = out.miya.136uM.df,
+             mapping = aes(x = `miyazono`, y = `136 µM`),
+             color = "black", size = 16, shape = 16) +
+  geom_smooth(out.miya.136uM.df,
+              mapping = aes(x = `miyazono`, y = `136 µM`),
               method = 'lm',
               color = "black",
               fullrange = T,
@@ -268,7 +269,8 @@ out.S2C_theormax <- ggplot(out.miya.116uM.df, aes(x = `miyazono`, y = `116 µM`)
   annotate("text",
            x = -5,
            y = 105,
-           label = bquote(italic(r) == .(format(r.116, digits = 2))),
+           label = expr_text(bquote(italic(r) == .(format(r.136, digits = 2)))),
+           parse = T,
            hjust = 0, size = 35, color = "black") +
   theme_classic(base_size = 50) +
   theme(plot.title = element_markdown(),
@@ -277,15 +279,15 @@ out.S2C_theormax <- ggplot(out.miya.116uM.df, aes(x = `miyazono`, y = `116 µM`)
         axis.text = element_text(size = 40),
         axis.line.x = element_line(size = 1, color = 'black'),
         axis.line.y = element_line(size = 1, color = 'black'),
-        axis.title.x = element_text(family = 'Helvetica', colour = 'black', size = 50, vjust = -1),
-        axis.title.y = element_text(family = 'Helvetica', colour = 'black', size = 50, vjust = 3),
+        axis.title.x = element_text(family = 'Helvetica', colour = 'black', size = 40, vjust = -1),
+        axis.title.y = element_text(family = 'Helvetica', colour = 'black', size = 40, vjust = 3),
         legend.position = "none",
         text = element_text(family="Helvetica"),
         plot.margin = unit(c(2, 2, 2, 2),"cm")) +
-  labs(x = "Binding (Miyazono et al., Nature 2009)",
-       y = "Binding (this study, 116.9 µM)")
+  labs(x = "Relative PYL1/ABI1 Binding (Miyazono et al., 2009)",
+       y = "Relative PYL1/ABI1 Binding (this study, 136.5 µM)")
 
-pdf("../../results/FigureS2/FigureS2C_potency_shift_theor_max.pdf", height = 15, width = 18)
+pdf("../../results/FigureS2/FigureS2C_potency_shift_theor_max_v2.pdf", height = 15, width = 18)
 print(out.S2C_theormax)
 dev.off()
 
@@ -294,13 +296,13 @@ dev.off()
 ################
 
 # sessionInfo()
-# R version 4.4.1 (2024-06-14)
+# R version 4.5.1 (2025-06-13)
 # Platform: aarch64-apple-darwin20
 # Running under: macOS Sonoma 14.6.1
 # 
 # Matrix products: default
 # BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib 
-# LAPACK: /Library/Frameworks/R.framework/Versions/4.4-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.0
+# LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
 # 
 # locale:
 # [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
@@ -312,13 +314,14 @@ dev.off()
 # [1] stats     graphics  grDevices utils     datasets  methods   base     
 # 
 # other attached packages:
-# [1] ggtext_0.1.2  ggrepel_0.9.6 ggplot2_3.5.1 drc_3.0-1     MASS_7.3-64  
+# [1] rlang_1.1.6   ggtext_0.1.2  ggrepel_0.9.6 ggplot2_4.0.0 drc_3.0-1     MASS_7.3-65  
 # 
 # loaded via a namespace (and not attached):
-# [1] Matrix_1.7-2      gtable_0.3.6      crayon_1.5.3      dplyr_1.1.4       compiler_4.4.1    gtools_3.9.5      tidyselect_1.2.1 
-# [8] plotrix_3.8-4     Rcpp_1.0.14       xml2_1.3.6        splines_4.4.1     scales_1.3.0      lattice_0.22-6    TH.data_1.1-3    
-# [15] R6_2.6.1          generics_0.1.3    Formula_1.2-5     tibble_3.2.1      car_3.1-3         munsell_0.5.1     pillar_1.10.1    
-# [22] rlang_1.1.5       multcomp_1.4-28   cli_3.6.4         mgcv_1.9-1        withr_3.0.2       magrittr_2.0.3    gridtext_0.1.5   
-# [29] grid_4.4.1        rstudioapi_0.17.1 mvtnorm_1.3-3     sandwich_3.1-1    nlme_3.1-167      lifecycle_1.0.4   vctrs_0.6.5      
-# [36] glue_1.8.0        farver_2.1.2      codetools_0.2-20  zoo_1.8-12        survival_3.8-3    abind_1.4-8       carData_3.0-5    
-# [43] colorspace_2.1-1  tools_4.4.1       pkgconfig_2.0.3  
+# [1] Matrix_1.7-4       gtable_0.3.6       crayon_1.5.3       dplyr_1.1.4        compiler_4.5.1     gtools_3.9.5      
+# [7] tidyselect_1.2.1   plotrix_3.8-4      Rcpp_1.1.0         xml2_1.4.0         splines_4.5.1      scales_1.4.0      
+# [13] lattice_0.22-7     TH.data_1.1-4      R6_2.6.1           generics_0.1.4     Formula_1.2-5      tibble_3.3.0      
+# [19] car_3.1-3          pillar_1.11.0      RColorBrewer_1.1-3 multcomp_1.4-28    S7_0.2.0           cli_3.6.5         
+# [25] mgcv_1.9-3         withr_3.0.2        magrittr_2.0.3     gridtext_0.1.5     grid_4.5.1         rstudioapi_0.17.1 
+# [31] mvtnorm_1.3-3      sandwich_3.1-1     nlme_3.1-168       lifecycle_1.0.4    vctrs_0.6.5        glue_1.8.0        
+# [37] farver_2.1.2       codetools_0.2-20   zoo_1.8-14         survival_3.8-3     abind_1.4-8        carData_3.0-5     
+# [43] pkgconfig_2.0.3    tools_4.5.1  
