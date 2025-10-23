@@ -30,7 +30,7 @@ lapply(packages, library, character.only = TRUE)
 load("../../data/DRCs/PYL1-ABI1_parameters_Hill.RData")
 
 ## filter
-Hill.parameters.filtered <- parameters.Hill[which(parameters.Hill[,"EC50 P"] < 0.1 & parameters.Hill[,"Hill P"] < 0.1 & parameters.Hill[,"R^2"] > 0.9),]
+Hill.parameters.filtered <- parameters.Hill[which(parameters.Hill[,"R^2"] > 0.9),]
 Hill.parameters.filtered <- Hill.parameters.filtered[-grep("[*]", rownames(Hill.parameters.filtered)),]
 
 
