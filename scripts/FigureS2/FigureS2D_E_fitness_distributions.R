@@ -1,7 +1,7 @@
 # The genetic architecture of an allosteric hormone receptor
 # Maximilian R. Stammnitz & Ben Lehner
 # bioRxiv link: https://www.biorxiv.org/content/10.1101/2025.05.30.656975v1
-# 31.05.2025
+# 23.10.2025
 # © M.R.S. (maximilian.stammnitz@crg.eu)
 
 ###############################################################
@@ -27,7 +27,7 @@ lapply(packages, library, character.only = TRUE)
 ##################################
 
 ## Load
-load("../../data/DiMSum/PYL1-ABI1/PYL1-ABI1_preprocessed.RData")
+load("../../data/DiMSum/PYL1-ABI1/PYL1-ABI1_preprocessed_v2.RData")
 
 
 ## 2. Stratify mutants ##
@@ -146,8 +146,8 @@ for(i in 1:12){
 
 ## Data separation at 0 µM (+)-ABA
 tmp.dist <- density(PYL1.ABI1[[12]]$gr_normalised_WTscaled, 
-                    n = 1000, kernel = 'gaussian', 
-                    from = -20, to = 130)
+                    n = 10000, kernel = 'gaussian', 
+                    from = -1000, to = 1000)
 plot_data <- data.frame(x = tmp.dist$x, y = tmp.dist$y,
                         dosage = as.numeric(names(PYL1.ABI1))[12])
 plot_data$category <- ifelse(plot_data$x >= bin.split[[12]], "Above", "Below")
@@ -161,20 +161,20 @@ out.S2D_low <- ggplot(plot_data, aes(x = x, y = y, fill = category)) +
                color = "black",
                linewidth = 0.5, na.rm=T) +
   geom_vline(xintercept = bin.split[[12]], color = "black", size = 2) + 
-  annotate("text", x = bin.split[[12]] - 20, 
+  annotate("text", x = bin.split[[12]] - 30, 
            y = max(plot_data$y) * 1.1, 
-           label = "85.4%",
+           label = paste0(round(100 * length(which(PYL1.ABI1.gr$`0` < bin.split[[12]])) / length(PYL1.ABI1.gr$`0`[which(is.na(PYL1.ABI1.gr$`0`) == F)]), 1), "%"),
            size = 7, color = "black") + 
-  annotate("text", x = bin.split[[12]] + 20, 
+  annotate("text", x = bin.split[[12]] + 30, 
            y = max(plot_data$y) * 1.1, 
-           label = "14.6%",
+           label = paste0(round(100 * length(which(PYL1.ABI1.gr$`0` >= bin.split[[12]])) / length(PYL1.ABI1.gr$`0`[which(is.na(PYL1.ABI1.gr$`0`) == F)]), 1), "%"),
            size = 7, color = "darkgreen") +
   scale_fill_manual(values = c("Above" = "darkgreen", "Below" = "white"),
                     name = "Density Threshold") +
-  scale_x_continuous(limits = c(-20, 130),
+  scale_x_continuous(limits = c(-1000, 1000),
                      breaks = seq(0, 100, length.out = 6),
                      labels = seq(0, 100, length.out = 6)) +
-  coord_cartesian(xlim = c(-10, 125)) +
+  coord_cartesian(xlim = c(-35, 135)) +
   theme_classic(base_size = 50) +
   theme(plot.title = element_markdown(size = 40, hjust = 0.5),
         plot.subtitle = element_markdown(size = 20),
@@ -193,14 +193,14 @@ out.S2D_low <- ggplot(plot_data, aes(x = x, y = y, fill = category)) +
   labs(title = "0 µM (+)-ABA",
        x = "Binding", y = "")
 
-pdf("../../results/FigureS2/FigureS2D_variant_distr_low.pdf", width = 6, height = 10)
+pdf("../../results/FigureS2/FigureS2D_variant_distr_low_v2.pdf", width = 6, height = 10)
 print(out.S2D_low)
 dev.off()
 
 ## Data separation at 16.7 µM (+)-ABA
 tmp.dist <- density(PYL1.ABI1[[5]]$gr_normalised_WTscaled, 
-                    n = 1000, kernel = 'gaussian', 
-                    from = -20, to = 130)
+                    n = 10000, kernel = 'gaussian', 
+                    from = -1000, to = 1000)
 plot_data <- data.frame(x = tmp.dist$x, y = tmp.dist$y,
                         dosage = as.numeric(names(PYL1.ABI1))[1])
 plot_data$category <- ifelse(plot_data$x >= bin.split[[5]], "Above", "Below")
@@ -214,20 +214,20 @@ out.S2D_mid <- ggplot(plot_data, aes(x = x, y = y, fill = category)) +
                color = "black",
                linewidth = 0.5, na.rm=T) +
   geom_vline(xintercept = bin.split[[5]], color = "black", size = 2) +  # Add vertical line
-  annotate("text", x = bin.split[[5]] - 20, 
+  annotate("text", x = bin.split[[5]] - 30, 
            y = max(plot_data$y) * 1.1, 
-           label = "43.6%",
-           size = 7, olor = "black") + 
-  annotate("text", x = bin.split[[5]] + 20, 
+           label = paste0(round(100 * length(which(PYL1.ABI1.gr$`16.6597251145356` < bin.split[[5]])) / length(PYL1.ABI1.gr$`16.6597251145356`[which(is.na(PYL1.ABI1.gr$`16.6597251145356`) == F)]), 1), "%"),
+           size = 7, color = "black") + 
+  annotate("text", x = bin.split[[5]] + 30, 
            y = max(plot_data$y) * 1.1, 
-           label = "56.4%",
+           label = paste0(round(100 * length(which(PYL1.ABI1.gr$`16.6597251145356` >= bin.split[[5]])) / length(PYL1.ABI1.gr$`16.6597251145356`[which(is.na(PYL1.ABI1.gr$`16.6597251145356`) == F)]), 1), "%"),
            size = 7, color = "darkgreen") +
   scale_fill_manual(values = c("Above" = "darkgreen", "Below" = "white"),
                     name = "Density Threshold") +
-  scale_x_continuous(limits = c(-20, 130),
+  scale_x_continuous(limits = c(-1000, 1000),
                      breaks = seq(0, 100, length.out = 6),
                      labels = seq(0, 100, length.out = 6)) +
-  coord_cartesian(xlim = c(-10, 125)) +
+  coord_cartesian(xlim = c(-35, 135)) +
   theme_classic(base_size = 50) +
   theme(plot.title = element_markdown(size = 40, hjust = 0.5),
         plot.subtitle = element_markdown(size = 20),
@@ -246,14 +246,14 @@ out.S2D_mid <- ggplot(plot_data, aes(x = x, y = y, fill = category)) +
   labs(title = "16.7 µM (+)-ABA",
        x = "Binding", y = "")
 
-pdf("../../results/FigureS2/FigureS2D_variant_distr_mid.pdf", width = 6, height = 10)
+pdf("../../results/FigureS2/FigureS2D_variant_distr_mid_v2.pdf", width = 6, height = 10)
 print(out.S2D_mid)
 dev.off()
 
 ## Data separation at 2,500 µM (+)-ABA
 tmp.dist <- density(PYL1.ABI1[[1]]$gr_normalised_WTscaled, 
-                    n = 1000, kernel = 'gaussian', 
-                    from = -20, to = 130)
+                    n = 10000, kernel = 'gaussian', 
+                    from = -1000, to = 1000)
 plot_data <- data.frame(x = tmp.dist$x, y = tmp.dist$y,
                         dosage = as.numeric(names(PYL1.ABI1))[1])
 plot_data$category <- ifelse(plot_data$x >= bin.split[[1]], "Above", "Below")
@@ -267,20 +267,20 @@ out.S2D_high <- ggplot(plot_data, aes(x = x, y = y, fill = category)) +
                color = "black",
                linewidth = 0.5, na.rm=T) +
   geom_vline(xintercept = bin.split[[1]], color = "black", size = 2) +  # Add vertical line
-  annotate("text", x = bin.split[[1]] - 20, 
+  annotate("text", x = bin.split[[1]] - 30, 
            y = max(plot_data$y) * 1.1, 
-           label = "13.6%",
+           label = paste0(round(100 * length(which(PYL1.ABI1.gr$`2500` < bin.split[[1]])) / length(PYL1.ABI1.gr$`2500`[which(is.na(PYL1.ABI1.gr$`2500`) == F)]), 1), "%"),
            size = 7, color = "black") + 
-  annotate("text", x = bin.split[[1]] + 20, 
+  annotate("text", x = bin.split[[1]] + 30, 
            y = max(plot_data$y) * 1.1, 
-           label = "86.4%",
+           label = paste0(round(100 * length(which(PYL1.ABI1.gr$`2500` >= bin.split[[1]])) / length(PYL1.ABI1.gr$`2500`[which(is.na(PYL1.ABI1.gr$`2500`) == F)]), 1), "%"),
            size = 7, color = "darkgreen") +
   scale_fill_manual(values = c("Above" = "darkgreen", "Below" = "white"),
                     name = "Density Threshold") +
-  scale_x_continuous(limits = c(-20, 130),
+  scale_x_continuous(limits = c(-1000, 1000),
                      breaks = seq(0, 100, length.out = 6),
                      labels = seq(0, 100, length.out = 6)) +
-  coord_cartesian(xlim = c(-10, 125)) +
+  coord_cartesian(xlim = c(-35, 135)) +
   theme_classic(base_size = 50) +
   theme(plot.title = element_markdown(size = 40, hjust = 0.5),
         plot.subtitle = element_markdown(size = 20),
@@ -299,7 +299,7 @@ out.S2D_high <- ggplot(plot_data, aes(x = x, y = y, fill = category)) +
   labs(title = "2,500 µM (+)-ABA",
        x = "Binding", y = "")
 
-pdf("../../results/FigureS2/FigureS2D_variant_distr_high.pdf", width = 6, height = 10)
+pdf("../../results/FigureS2/FigureS2D_variant_distr_high_v2.pdf", width = 6, height = 10)
 print(out.S2D_high)
 dev.off()
 
@@ -310,7 +310,7 @@ dev.off()
 i <- 5
 
 ## combine data and annotations
-df <- PYL1.ABI1[[i]][,-c(4:6,8,10,12:c(ncol(PYL1.ABI1[[i]])-1))]
+df <- PYL1.ABI1[[i]]
 
 ### 1. stop-like vs. WT-like split
 df$impact <- rep(NA,nrow(df))
@@ -375,13 +375,13 @@ fisher.test(cont.3)
 ################
 
 # sessionInfo()
-# R version 4.4.1 (2024-06-14)
+# R version 4.5.1 (2025-06-13)
 # Platform: aarch64-apple-darwin20
 # Running under: macOS Sonoma 14.6.1
 # 
 # Matrix products: default
 # BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib 
-# LAPACK: /Library/Frameworks/R.framework/Versions/4.4-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.0
+# LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
 # 
 # locale:
 # [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
@@ -393,11 +393,13 @@ fisher.test(cont.3)
 # [1] stats     graphics  grDevices utils     datasets  methods   base     
 # 
 # other attached packages:
-# [1] cowplot_1.1.3 ggtext_0.1.2  ggplot2_3.5.1 scales_1.3.0  stringr_1.5.1
+# [1] cowplot_1.2.0 ggtext_0.1.2  ggplot2_4.0.0 scales_1.4.0  stringr_1.5.1
 # 
 # loaded via a namespace (and not attached):
-# [1] crayon_1.5.3      vctrs_0.6.5       cli_3.6.4         xfun_0.51         rlang_1.1.5       stringi_1.8.4     generics_0.1.3   
-# [8] labeling_0.4.3    glue_1.8.0        colorspace_2.1-1  markdown_1.13     gridtext_0.1.5    grid_4.4.1        munsell_0.5.1    
-# [15] tibble_3.2.1      lifecycle_1.0.4   compiler_4.4.1    dplyr_1.1.4       Rcpp_1.0.14       pkgconfig_2.0.3   rstudioapi_0.17.1
-# [22] farver_2.1.2      R6_2.6.1          tidyselect_1.2.1  pillar_1.10.1     commonmark_1.9.2  magrittr_2.0.3    tools_4.4.1      
-# [29] withr_3.0.2       gtable_0.3.6      xml2_1.3.6  sessionInfo()
+# [1] crayon_1.5.3       vctrs_0.6.5        cli_3.6.5          xfun_0.53          rlang_1.1.6       
+# [6] stringi_1.8.7      generics_0.1.4     S7_0.2.0           litedown_0.7       labeling_0.4.3    
+# [11] glue_1.8.0         markdown_2.0       gridtext_0.1.5     grid_4.5.1         tibble_3.3.0      
+# [16] lifecycle_1.0.4    compiler_4.5.1     dplyr_1.1.4        RColorBrewer_1.1-3 Rcpp_1.1.0        
+# [21] pkgconfig_2.0.3    rstudioapi_0.17.1  farver_2.1.2       R6_2.6.1           tidyselect_1.2.1  
+# [26] pillar_1.11.0      commonmark_2.0.0   magrittr_2.0.3     tools_4.5.1        withr_3.0.2       
+# [31] gtable_0.3.6       xml2_1.4.0  
