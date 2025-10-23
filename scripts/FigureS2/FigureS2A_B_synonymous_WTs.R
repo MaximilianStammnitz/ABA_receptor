@@ -72,7 +72,6 @@ for (i in 1:length(PYL1.ABI1.WT.ls)){
   tmp.drc.par[4] <- -tmp.drc.par[4]
   
   ## Predict the full, smoothened curve (using 1000 data points) and confidence interval
-  tmp.drc$concentration[12] <- 9.062741e-03/3.5/3.5/3.5 ## "0-conc." positioning for log scale
   tmp.drc.predict.newdata <- expand.grid(conc = c(0, exp(seq(log(0.001), log(5000), length = 999))))
   tmp.drc.predict <- predict(tmp.drc,
                              newdata = tmp.drc.predict.newdata,
