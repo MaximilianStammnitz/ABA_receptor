@@ -1,7 +1,7 @@
 # The genetic architecture of an allosteric hormone receptor
 # Maximilian R. Stammnitz & Ben Lehner
 # bioRxiv link: https://www.biorxiv.org/content/10.1101/2025.05.30.656975v1
-# 22.10.2025
+# 23.10.2025
 # © M.R.S. (maximilian.stammnitz@crg.eu)
 
 #################################################
@@ -128,7 +128,7 @@ out.1F <- ggplot(out.miya.10uM.df, aes(x = `miyazono`, y = `10 µM mean`)) +
               fullrange = T,
               linewidth = 1.5, alpha = 0.2, fill = "grey50") +
   geom_errorbar(aes(ymin = `10 µM lower`, ymax = `10 µM upper`),
-                 color = "black", linewidth = 1) +
+                 color = "black", width = 0, linewidth = 1) +
   geom_point(data = out.miya.10uM.df,
              mapping = aes(x = `miyazono`, y = `10 µM mean`),
              color = "black", size = 8, shape = 21, fill = "#569956") +
