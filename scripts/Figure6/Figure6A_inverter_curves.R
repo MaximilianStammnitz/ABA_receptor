@@ -1,7 +1,7 @@
 # The genetic architecture of an allosteric hormone receptor
 # Maximilian R. Stammnitz & Ben Lehner
 # bioRxiv link: https://www.biorxiv.org/content/10.1101/2025.05.30.656975v1
-# 31.05.2025
+# 23.10.2025
 # © M.R.S. (maximilian.stammnitz@crg.eu)
 
 ###############################################
@@ -13,7 +13,7 @@
 ####################
 
 # Libraries
-packages <- c("stringr", "scales", "drc", "reshape", "ggplot2", "ggtext", "wesanderson")
+packages <- c("stringr", "scales", "drc", "reshape", "ggplot2", "ggtext", "wesanderson", "rlang")
 
 ## Install missing packages
 install_if_missing <- function(pkg) {if (!requireNamespace(pkg, quietly = TRUE)) install.packages(pkg)}
@@ -217,15 +217,16 @@ inverter.plot <- function(id){
               aes(group = variable, x = conc, y = value), 
               linewidth = 5, alpha = 1, colour = cols) +
     geom_point(data = points.tmp, aes(x = conc, y = value),
-               size = 15, alpha = 1, colour = cols) +
+               size = 13, alpha = 1, colour = cols, shape = 16) +
     annotate("text", x = 0.0002113759, y = 10,
-             size = 25, label =bquote(
+             size = 25, label = expr_text(bquote(
                italic(R)^2 == .(format(round(parameters.Hill[grep(id, rownames(parameters.Hill)), "R^2"], 2), digits = 2)) *
                  ", " *
                  Delta * "Binding = " * .(format(round(parameters.Hill[grep(id, rownames(parameters.Hill)), "B[inf]"] -
                                                        parameters.Hill[grep(id, rownames(parameters.Hill)),"B[0]"], 1), nsmall = 1)) * "%"
              ),
-             color = "black", hjust = 0) +
+             parse = T,
+             color = "black", hjust = 0)) +
     scale_x_log10(breaks = c(9.062741e-03/3.5/3.5/3.5, 0.01, 0.1, 1, 10, 100, 1000),
                   labels = c(0, 0.01, 0.1, 1, 10, 100, "1,000"),
                   limits = c(9.062741e-03/3.5/3.5/3.5, 5000)) +
@@ -243,7 +244,7 @@ inverter.plot <- function(id){
           plot.margin = unit(c(1, 1, 2, 2),"cm")) +
     labs(title = id,
          x = "(+)-ABA conc. (µM)",
-         y = "Binding (library sequencing)")
+         y = "Relative PYL1/ABI1 Binding")
 print(p)
   
 }
@@ -269,13 +270,13 @@ dev.off()
 ################
 
 # sessionInfo()
-# R version 4.4.1 (2024-06-14)
+# R version 4.5.1 (2025-06-13)
 # Platform: aarch64-apple-darwin20
 # Running under: macOS Sonoma 14.6.1
 # 
 # Matrix products: default
 # BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib 
-# LAPACK: /Library/Frameworks/R.framework/Versions/4.4-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.0
+# LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
 # 
 # locale:
 # [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
@@ -287,15 +288,15 @@ dev.off()
 # [1] stats     graphics  grDevices utils     datasets  methods   base     
 # 
 # other attached packages:
-# [1] wesanderson_0.3.7 ggtext_0.1.2      ggplot2_3.5.1     reshape_0.8.9     drc_3.0-1         MASS_7.3-64      
-# [7] scales_1.3.0      stringr_1.5.1    
+# [1] rlang_1.1.6       wesanderson_0.3.7 ggtext_0.1.2      ggplot2_4.0.0     reshape_0.8.10    drc_3.0-1        
+# [7] MASS_7.3-65       scales_1.4.0      stringr_1.5.1    
 # 
 # loaded via a namespace (and not attached):
-# [1] sandwich_3.1-1    generics_0.1.3    xml2_1.3.6        gtools_3.9.5      stringi_1.8.4     lattice_0.22-6   
-# [7] magrittr_2.0.3    grid_4.4.1        mvtnorm_1.3-3     plyr_1.8.9        Matrix_1.7-2      Formula_1.2-5    
-# [13] survival_3.8-3    multcomp_1.4-28   TH.data_1.1-3     codetools_0.2-20  abind_1.4-8       cli_3.6.4        
-# [19] rlang_1.1.5       commonmark_1.9.2  munsell_0.5.1     splines_4.4.1     withr_3.0.2       plotrix_3.8-4    
-# [25] tools_4.4.1       dplyr_1.1.4       colorspace_2.1-1  vctrs_0.6.5       R6_2.6.1          zoo_1.8-12       
-# [31] lifecycle_1.0.4   car_3.1-3         pkgconfig_2.0.3   pillar_1.10.1     gtable_0.3.6      glue_1.8.0       
-# [37] Rcpp_1.0.14       xfun_0.51         tibble_3.2.1      tidyselect_1.2.1  rstudioapi_0.17.1 farver_2.1.2     
-# [43] carData_3.0-5     compiler_4.4.1    markdown_1.13     gridtext_0.1.5   
+# [1] sandwich_3.1-1     generics_0.1.4     xml2_1.4.0         gtools_3.9.5       stringi_1.8.7      lattice_0.22-7    
+# [7] magrittr_2.0.3     grid_4.5.1         RColorBrewer_1.1-3 mvtnorm_1.3-3      plyr_1.8.9         Matrix_1.7-4      
+# [13] Formula_1.2-5      survival_3.8-3     multcomp_1.4-28    TH.data_1.1-4      codetools_0.2-20   abind_1.4-8       
+# [19] cli_3.6.5          litedown_0.7       commonmark_2.0.0   splines_4.5.1      withr_3.0.2        plotrix_3.8-4     
+# [25] tools_4.5.1        dplyr_1.1.4        vctrs_0.6.5        R6_2.6.1           zoo_1.8-14         lifecycle_1.0.4   
+# [31] car_3.1-3          pkgconfig_2.0.3    pillar_1.11.0      gtable_0.3.6       glue_1.8.0         Rcpp_1.1.0        
+# [37] xfun_0.53          tibble_3.3.0       tidyselect_1.2.1   rstudioapi_0.17.1  farver_2.1.2       carData_3.0-5     
+# [43] compiler_4.5.1     S7_0.2.0           markdown_2.0       gridtext_0.1.5   
