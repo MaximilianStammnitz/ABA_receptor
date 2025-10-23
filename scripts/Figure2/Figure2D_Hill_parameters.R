@@ -1,7 +1,7 @@
 # The genetic architecture of an allosteric hormone receptor
 # Maximilian R. Stammnitz & Ben Lehner
 # bioRxiv link: https://www.biorxiv.org/content/10.1101/2025.05.30.656975v1
-# 31.05.2025
+# 23.10.2025
 # © M.R.S. (maximilian.stammnitz@crg.eu)
 
 #################################
@@ -30,7 +30,7 @@ lapply(packages, library, character.only = TRUE)
 load("../../data/DRCs/PYL1-ABI1_parameters_Hill.RData")
 
 ## filter
-Hill.parameters.filtered <- parameters.Hill[which(parameters.Hill[,"EC50 P"] < 0.05 & parameters.Hill[,"Hill P"] < 0.05 & parameters.Hill[,"R^2"] > 0.95),]
+Hill.parameters.filtered <- parameters.Hill[which(parameters.Hill[,"EC50 P"] < 0.1 & parameters.Hill[,"Hill P"] < 0.1 & parameters.Hill[,"R^2"] > 0.9),]
 Hill.parameters.filtered <- Hill.parameters.filtered[-grep("[*]", rownames(Hill.parameters.filtered)),]
 
 
@@ -46,7 +46,7 @@ par(mar = c(2, 12, 2, 3))
 
 ## boxplot frame
 boxplot(Hill.parameters.filtered[,"B[0]"],
-        ylim = c(-5, 112),
+        ylim = c(-20, 120),
         yaxt = "n",
         main = '',
         col = 'white',
@@ -93,7 +93,7 @@ par(mar = c(2, 12, 2, 3))
 
 ## boxplot frame
 boxplot(Hill.parameters.filtered[,"B[inf]"],
-        ylim = c(-5, 112),
+        ylim = c(-20, 120),
         yaxt = "n",
         main = '',
         col = 'white',
@@ -233,13 +233,13 @@ dev.off()
 ################
 
 # sessionInfo()
-# R version 4.4.1 (2024-06-14)
+# R version 4.5.1 (2025-06-13)
 # Platform: aarch64-apple-darwin20
 # Running under: macOS Sonoma 14.6.1
 # 
 # Matrix products: default
 # BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib 
-# LAPACK: /Library/Frameworks/R.framework/Versions/4.4-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.0
+# LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
 # 
 # locale:
 # [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
@@ -251,8 +251,9 @@ dev.off()
 # [1] stats     graphics  grDevices utils     datasets  methods   base     
 # 
 # other attached packages:
-# [1] beeswarm_0.4.0 scales_1.3.0   stringr_1.5.1 
+# [1] beeswarm_0.4.0 scales_1.4.0   stringr_1.5.1 
 # 
 # loaded via a namespace (and not attached):
-# [1] colorspace_2.1-1  compiler_4.4.1    R6_2.6.1          magrittr_2.0.3    cli_3.6.4         tools_4.4.1      
-# [7] glue_1.8.0        rstudioapi_0.17.1 stringi_1.8.4     lifecycle_1.0.4   munsell_0.5.1     rlang_1.1.5    
+# [1] compiler_4.5.1     R6_2.6.1           magrittr_2.0.3     cli_3.6.5          tools_4.5.1       
+# [6] RColorBrewer_1.1-3 glue_1.8.0         rstudioapi_0.17.1  farver_2.1.2       stringi_1.8.7     
+# [11] lifecycle_1.0.4    rlang_1.1.6
