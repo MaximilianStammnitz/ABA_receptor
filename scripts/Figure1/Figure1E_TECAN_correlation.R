@@ -1,7 +1,7 @@
 # The genetic architecture of an allosteric hormone receptor
 # Maximilian R. Stammnitz & Ben Lehner
 # bioRxiv link: https://www.biorxiv.org/content/10.1101/2025.05.30.656975v1
-# 22.10.2025
+# 24.10.2025
 # © M.R.S. (maximilian.stammnitz@crg.eu)
 
 ###############################################
@@ -48,7 +48,6 @@ names(results) <- c('WT',
                     'H87V',
                     'H87P',
                     'A116S',
-                    'T118N',
                     'T118W',
                     'S119A',
                     'S119V',
@@ -160,19 +159,6 @@ results$A116S <- tecan.30[c('I24', 'I23',
                             'I4', 'I3',
                             'I2', 'I1'),]
 
-results$T118N <- tecan.30[c('J24', 'J23',
-                            'J22', 'J21',
-                            'J20', 'J19',
-                            'J18', 'J17',
-                            'J16', 'J15',
-                            'J14', 'J13',
-                            'J12', 'J11',
-                            'J10', 'J9',
-                            'J8', 'J7',
-                            'J6', 'J5',
-                            'J4', 'J3',
-                            'J2', 'J1'),]
-
 results$T118W <- tecan.30[c('K24', 'K23',
                             'K22', 'K21',
                             'K20', 'K19',
@@ -274,7 +260,7 @@ for (i in 1:length(PYL1.TECAN.curves.gr)){
   
 }
 
-### Fit WT curve Hill model
+### fit WT curve Hill model
 dosages <- rep(NA, 12)
 dosages[1] <- 2500
 dosages[12] <- 0
@@ -299,15 +285,100 @@ WT.PYL1.drc.par[4] <- -WT.PYL1.drc.par[4]
 ## standardise TECAN data to the WT curve's B[inf]
 PYL1.TECAN.curves.gr <- lapply(PYL1.TECAN.curves.gr, function(x){y <- 100*c(x/WT.PYL1.drc.par["B[inf]"]); return(y)})
 
+## calculate dose-response curves using duplicate measurements, generate the confidence intervals at the key concentrations
+PYL1.TECAN.curves.gr.predict <- vector(mode = "list", length = length(PYL1.TECAN.curves.gr))
+names(PYL1.TECAN.curves.gr.predict) <- names(PYL1.TECAN.curves.gr)
+for(i in 1:length(PYL1.TECAN.curves.gr)){
+
+  print(names(PYL1.TECAN.curves.gr.predict)[i])
+    
+  ## temporary input data frame
+  tmp.drc <- cbind(PYL1.TECAN.curves.gr[[i]],
+                   rep(sort(dosages), each = 2))
+  class(tmp.drc) <- "numeric"
+  tmp.drc <- as.data.frame(tmp.drc)
+  colnames(tmp.drc) <- c("B", "concentration")
+  
+  ## temporary Hill fit & parameters 
+  tmp.drc <- drm(tmp.drc$B ~ tmp.drc$concentration,
+                 fct = LL.4(fixed = c(NA, NA, NA, NA), names = c("Hill", "B[0]", "B[inf]", "EC50")),
+                 type = 'continuous')
+
+  ## temporary prediction
+  tmp.drc.predict.newdata <- expand.grid(conc = sort(dosages))
+  tmp.drc.predict <- predict(tmp.drc,
+                             newdata = tmp.drc.predict.newdata,
+                             interval = "confidence",
+                             level = 0.95)
+  rownames(tmp.drc.predict) <- sort(dosages)
+
+  ## export
+  PYL1.TECAN.curves.gr.predict[[i]] <- tmp.drc.predict
+  
+  ## clean up
+  rm(tmp.drc, tmp.drc.predict.newdata, tmp.drc.predict)
+  
+}
+
 ## clean up
-rm(results,setup,tecan.30,i,k,tmp.out,WT.PYL1.drc,WT.PYL1.drc.par,dosages)
+rm(results,setup,tecan.30,i,k,tmp.out,WT.PYL1.drc,WT.PYL1.drc.par)
 
 
 ## 2. Pre-processed DiMSum data ##
 ##################################
 
-## Load
+## load pre-processed GluePCA DMS data 
 load("../../data/DiMSum/PYL1-ABI1/PYL1-ABI1_preprocessed.RData")
+
+## load dose-response curve metrics
+load("../../data/DRCs/PYL1-ABI1_parameters_Hill.RData")
+
+## which TECAN variants have high confidence DMS library fits?
+parameters.Hill.lib <- parameters.Hill[match(names(PYL1.TECAN.curves.gr), rownames(parameters.Hill)),]
+parameters.Hill.lib.hq <- parameters.Hill.lib[which(parameters.Hill.lib[,"R^2"] > 0.9),]
+
+## filter the TECAN curvce fits accordingly
+PYL1.TECAN.curves.gr <- PYL1.TECAN.curves.gr[match(rownames(parameters.Hill.lib.hq), names(PYL1.TECAN.curves.gr))]
+PYL1.TECAN.curves.gr.predict <- PYL1.TECAN.curves.gr.predict[match(rownames(parameters.Hill.lib.hq), names(PYL1.TECAN.curves.gr.predict))]
+
+## summarise the data
+PYL1.ABI1.keyvars <- matrix(NA, ncol = 12, nrow = length(PYL1.TECAN.curves.gr))
+rownames(PYL1.ABI1.keyvars) <- names(PYL1.TECAN.curves.gr)
+colnames(PYL1.ABI1.keyvars) <- names(PYL1.ABI1)
+for (i in 1:nrow(PYL1.ABI1.keyvars)){
+  if(i == 1){
+    PYL1.ABI1.keyvars[i,] <- sapply(PYL1.ABI1, function(x){x <- x[which(x$WT == T)[1],"gr_normalised_WTscaled"]; return(x)})
+  }else{
+    tmp.wt <- substr(names(PYL1.TECAN.curves.gr)[i], 1, 1)
+    tmp.pos <- as.numeric(substr(names(PYL1.TECAN.curves.gr)[i], 2, nchar(names(PYL1.TECAN.curves.gr)[i]) - 1))
+    tmp.mut <- substr(names(PYL1.TECAN.curves.gr)[i], nchar(names(PYL1.TECAN.curves.gr)[i]), nchar(names(PYL1.TECAN.curves.gr)[i]))
+    PYL1.ABI1.keyvars[i,] <- sapply(PYL1.ABI1, function(x){x <- x[which(x$WT_AA == tmp.wt & x$Pos == tmp.pos & x$Mut == tmp.mut),"gr_normalised_WTscaled"]; return(x)})
+  }
+}
+ 
+## remake the curves, generate the confidence intervals at the key concentrations
+PYL1.ABI1.keyvars.out <- vector(mode = "list", length = nrow(PYL1.ABI1.keyvars))
+names(PYL1.ABI1.keyvars.out) <- names(PYL1.TECAN.curves.gr)
+for(i in 1:length(PYL1.ABI1.keyvars.out)){
+
+  tmp.drc <- cbind(PYL1.ABI1.keyvars[i,],colnames(PYL1.ABI1.keyvars))
+  class(tmp.drc) <- "numeric"
+  tmp.drc <- as.data.frame(tmp.drc)
+  colnames(tmp.drc) <- c("B", "concentration")
+
+  tmp.drc <- drm(tmp.drc$B ~ tmp.drc$concentration,
+                 fct = LL.4(fixed = c(NA, NA, NA, NA), names = c("Hill", "B[0]", "B[inf]", "EC50")),
+                 type = 'continuous')
+
+  ## predict the full, smoothened curve (using 1000 data points) and confidence interval
+  tmp.predict.newdata <- expand.grid(conc = as.numeric(colnames(PYL1.ABI1.keyvars)))
+  PYL1.ABI1.keyvars.out[[i]] <- predict(tmp.drc,
+                                        newdata = tmp.predict.newdata,
+                                        interval = "confidence",
+                                        level = 0.95)
+  rownames(PYL1.ABI1.keyvars.out[[i]]) <- as.numeric(colnames(PYL1.ABI1.keyvars))
+
+}
 
 
 ## 3. Combine two the data sets ##
@@ -319,77 +390,101 @@ names(PYL1.mutant.summary) <- names(PYL1.TECAN.curves.gr)
 for(i in 1:length(PYL1.mutant.summary)){
   
   #### matrix setup
-  PYL1.mutant.summary[[i]] <- matrix(NA, ncol = 4, nrow = 12)
+  PYL1.mutant.summary[[i]] <- matrix(NA, ncol = 9, nrow = 12)
   colnames(PYL1.mutant.summary[[i]]) <- c("TECAN1_gr",
                                           "TECAN2_gr",
+                                          "TECAN_predict",
+                                          "TECAN_predict_min",
+                                          "TECAN_predict_max",
                                           "Competition_gr",
-                                          "Competition_gr_sigma")
-  rownames(PYL1.mutant.summary[[i]]) <- unique(names(PYL1.TECAN.curves.gr[[i]]))
+                                          "Competition_predict",
+                                          "Competition_predict_min",
+                                          "Competition_predict_max")
+  rownames(PYL1.mutant.summary[[i]]) <- sort(dosages)
   
   #### fill in TECAN data
   PYL1.mutant.summary[[i]][,"TECAN1_gr"] <- PYL1.TECAN.curves.gr[[i]][seq(f=1,to=23,by=2)]
   PYL1.mutant.summary[[i]][,"TECAN2_gr"] <- PYL1.TECAN.curves.gr[[i]][seq(f=2,to=24,by=2)]
+  PYL1.mutant.summary[[i]][,"TECAN_predict"] <- PYL1.TECAN.curves.gr.predict[[i]][,"Prediction"]
+  PYL1.mutant.summary[[i]][,"TECAN_predict_min"] <- PYL1.TECAN.curves.gr.predict[[i]][,"Lower"]
+  PYL1.mutant.summary[[i]][,"TECAN_predict_max"] <- PYL1.TECAN.curves.gr.predict[[i]][,"Upper"]
 
   #### fill in competition data
   if(i == 1){
     PYL1.mutant.summary[[i]][,"Competition_gr"] <- rev(apply(sapply(PYL1.ABI1, function(x){out <- x[which(x$WT == T),"gr_normalised_WTscaled"]; return(out)}), 2, median))
-    PYL1.mutant.summary[[i]][,"Competition_gr_sigma"] <- rev(apply(sapply(PYL1.ABI1, function(x){out <- x[which(x$WT == T),"gr_sigma_normalised_WTscaled"]; return(out)}), 2, median))    
+    PYL1.mutant.summary[[i]][,"Competition_predict"] <- rev(PYL1.ABI1.keyvars.out[[i]][,1])
+    PYL1.mutant.summary[[i]][,"Competition_predict_min"] <- rev(PYL1.ABI1.keyvars.out[[i]][,2])
+    PYL1.mutant.summary[[i]][,"Competition_predict_max"] <- rev(PYL1.ABI1.keyvars.out[[i]][,3])
   }else{
     var.tmp <- names(PYL1.mutant.summary)[i]
     var.tmp.pos <- as.numeric(substring(var.tmp, 2, nchar(var.tmp)-1))
     var.tmp.mut <- substring(var.tmp, nchar(var.tmp))
     PYL1.mutant.summary[[i]][,"Competition_gr"] <- rev(sapply(sapply(PYL1.ABI1, function(x){out <- x[which(x$Pos == var.tmp.pos & x$Mut == var.tmp.mut),"gr_normalised_WTscaled"]; return(out)}), median))
-    PYL1.mutant.summary[[i]][,"Competition_gr_sigma"] <- rev(sapply(sapply(PYL1.ABI1, function(x){out <- x[which(x$Pos == var.tmp.pos & x$Mut == var.tmp.mut),"gr_sigma_normalised_WTscaled"]; return(out)}), median))
+    PYL1.mutant.summary[[i]][,"Competition_predict"] <- rev(PYL1.ABI1.keyvars.out[[i]][,1])
+    PYL1.mutant.summary[[i]][,"Competition_predict_min"] <- rev(PYL1.ABI1.keyvars.out[[i]][,2])
+    PYL1.mutant.summary[[i]][,"Competition_predict_max"] <- rev(PYL1.ABI1.keyvars.out[[i]][,3])
   }
   
 }
 
 ## summarise
-TECAN.all <- do.call(c, lapply(PYL1.mutant.summary[-9], function(x){apply(x[,1:2], 1, function(x){mean(x)})}))
-TECAN.lower.all <- do.call(c, lapply(PYL1.mutant.summary[-9], function(x){apply(x[,1:2], 1, function(x){min(x)})}))
-TECAN.upper.all <- do.call(c, lapply(PYL1.mutant.summary[-9], function(x){apply(x[,1:2], 1, function(x){max(x)})}))
-COMPI.all <- do.call(c, lapply(PYL1.mutant.summary[-9], function(x){x[,3]}))
-COMPI.sigma.all <- do.call(c, lapply(PYL1.mutant.summary[-9], function(x){x[,4]}))
-out.tecan.df <- cbind("conc" = rep(1:12, 14),
-                      "tecan" = TECAN.all, 
-                      "tecan min" = TECAN.lower.all, 
-                      "tecan max" = TECAN.upper.all, 
-                      "competition" = COMPI.all, 
-                      "competition sigma" = COMPI.sigma.all)
+TECAN.mean <- do.call(c, lapply(PYL1.mutant.summary, function(x){apply(x[,1:2], 1, function(x){mean(x)})}))
+TECAN.lower <- do.call(c, lapply(PYL1.mutant.summary, function(x){apply(x[,1:2], 1, function(x){min(x)})}))
+TECAN.upper <- do.call(c, lapply(PYL1.mutant.summary, function(x){apply(x[,1:2], 1, function(x){max(x)})}))
+TECAN.pred <- do.call(c, lapply(PYL1.mutant.summary, function(x){x[,3]}))
+TECAN.pred.min <- do.call(c, lapply(PYL1.mutant.summary, function(x){x[,4]}))
+TECAN.pred.max <- do.call(c, lapply(PYL1.mutant.summary, function(x){x[,5]}))
+
+DMS <- do.call(c, lapply(PYL1.mutant.summary, function(x){x[,6]}))
+DMS.pred <- do.call(c, lapply(PYL1.mutant.summary, function(x){x[,7]}))
+DMS.pred.min <- do.call(c, lapply(PYL1.mutant.summary, function(x){x[,8]}))
+DMS.pred.max <- do.call(c, lapply(PYL1.mutant.summary, function(x){x[,9]}))
+
+out.tecan.df <- cbind("conc" = rep(1:12, 9),
+                      "tecan mean" = TECAN.mean, 
+                      "tecan min" = TECAN.lower, 
+                      "tecan max" = TECAN.upper, 
+                      "tecan pred" = TECAN.pred, 
+                      "tecan pred min" = TECAN.pred.min, 
+                      "tecan pred max" = TECAN.pred.max, 
+                      "competition" = DMS, 
+                      "competition pred" = DMS.pred, 
+                      "competition pred min" = DMS.pred.min, 
+                      "competition pred max" = DMS.pred.max)
 out.tecan.df <- as.data.frame(out.tecan.df)
 
 ## correlation
-r <- cor(x = out.tecan.df$tecan,
-         y = out.tecan.df$competition,
+r <- cor(x = out.tecan.df$`tecan pred`,
+         y = out.tecan.df$`competition pred`,
          method = "pearson")
 
 ## plot
 pdf("../../results/Figure1/Figure1E_individual_mutant_correlation.pdf",
     height = 15, width = 18)
 
-out.1E <- ggplot(out.tecan.df, aes(x = `tecan`, y = `competition`)) +
+out.1E <- ggplot(out.tecan.df, aes(x = `tecan pred`, y = `competition pred`)) +
   scale_x_continuous(breaks = seq(f = 0, t = 100, length.out = 6), limits = c(-1000, 1000)) +
   scale_y_continuous(breaks = seq(f = 0, t = 100, length.out = 6), limits = c(-1000, 1000)) +
   coord_cartesian(xlim = c(-5, 121), ylim = c(-5, 115)) +
   geom_smooth(out.tecan.df,
-              mapping = aes(x = `tecan`, y = `competition`),
+              mapping = aes(x = `tecan pred`, y = `competition pred`),
               method = 'lm',
               color = "black", fullrange = T,
               linewidth = 1.5, alpha = 0.2, fill = "grey50") +
-  geom_errorbar(data = out.tecan.df, 
-                aes(x = `tecan`, 
-                    ymin = `competition` - `competition sigma` * 1.96, 
-                    ymax = `competition` + `competition sigma` * 1.96),
+  geom_errorbar(data = out.tecan.df,
+                aes(x = `tecan pred`,
+                    ymin = `competition pred min`,
+                    ymax = `competition pred max`),
                 linewidth = 0.2,
                 color = "black") +
-  geom_errorbarh(data = out.tecan.df, 
-                 aes(x = `competition`, 
-                     xmin = `tecan min`, 
-                     xmax = `tecan max`),
+  geom_errorbar(data = out.tecan.df,
+                 aes(x = `competition pred`, 
+                     xmin = `tecan pred min`, 
+                     xmax = `tecan pred max`),
                  linewidth = 0.2,
                  color = "black") +
   geom_point(data = out.tecan.df,
-             mapping = aes(x = `tecan`, y = `competition`, fill = `conc`),
+             mapping = aes(x = `tecan pred`, y = `competition pred`, fill = `conc`),
              color = "black", size = 5, shape = 21, stroke = 0.5) +
   scale_fill_gradient(low = "white", high = "darkgreen") +
   annotate("text",
