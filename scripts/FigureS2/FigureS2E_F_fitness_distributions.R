@@ -5,7 +5,7 @@
 # © M.R.S. (maximilian.stammnitz@crg.eu)
 
 ###############################################################
-## Supplementary Figure 2D & 2E - PYL1 fitness distributions ##
+## Supplementary Figure 2E & 2F - PYL1 fitness distributions ##
 ###############################################################
 
 
@@ -156,7 +156,7 @@ plot_data$y[c(which(plot_data$category == "Above")[1] - 1)] <- 0
 plot_data$y[which(plot_data$category == "Above")[1]] <- 0
 plot_data$y[1000] <- 0
 
-out.S2D_low <- ggplot(plot_data, aes(x = x, y = y, fill = category)) +
+out.S2E_low <- ggplot(plot_data, aes(x = x, y = y, fill = category)) +
   geom_polygon(aes(group = category),
                color = "black",
                linewidth = 0.5, na.rm=T) +
@@ -193,8 +193,8 @@ out.S2D_low <- ggplot(plot_data, aes(x = x, y = y, fill = category)) +
   labs(title = "0 µM (+)-ABA",
        x = "Binding", y = "")
 
-pdf("../../results/FigureS2/FigureS2D_variant_distr_low_v2.pdf", width = 6, height = 10)
-print(out.S2D_low)
+pdf("../../results/FigureS2/FigureS2E_variant_distr_low_v2.pdf", width = 6, height = 10)
+print(out.S2E_low)
 dev.off()
 
 ## Data separation at 16.7 µM (+)-ABA
@@ -209,7 +209,7 @@ plot_data$y[c(which(plot_data$category == "Above")[1] - 1)] <- 0
 plot_data$y[which(plot_data$category == "Above")[1]] <- 0
 plot_data$y[1000] <- 0
 
-out.S2D_mid <- ggplot(plot_data, aes(x = x, y = y, fill = category)) +
+out.S2E_mid <- ggplot(plot_data, aes(x = x, y = y, fill = category)) +
   geom_polygon(aes(group = category),
                color = "black",
                linewidth = 0.5, na.rm=T) +
@@ -246,8 +246,8 @@ out.S2D_mid <- ggplot(plot_data, aes(x = x, y = y, fill = category)) +
   labs(title = "16.7 µM (+)-ABA",
        x = "Binding", y = "")
 
-pdf("../../results/FigureS2/FigureS2D_variant_distr_mid_v2.pdf", width = 6, height = 10)
-print(out.S2D_mid)
+pdf("../../results/FigureS2/FigureS2E_variant_distr_mid_v2.pdf", width = 6, height = 10)
+print(out.S2E_mid)
 dev.off()
 
 ## Data separation at 2,500 µM (+)-ABA
@@ -262,7 +262,7 @@ plot_data$y[c(which(plot_data$category == "Above")[1] - 1)] <- 0
 plot_data$y[which(plot_data$category == "Above")[1]] <- 0
 plot_data$y[1000] <- 0
 
-out.S2D_high <- ggplot(plot_data, aes(x = x, y = y, fill = category)) +
+out.S2E_high <- ggplot(plot_data, aes(x = x, y = y, fill = category)) +
   geom_polygon(aes(group = category),
                color = "black",
                linewidth = 0.5, na.rm=T) +
@@ -299,8 +299,8 @@ out.S2D_high <- ggplot(plot_data, aes(x = x, y = y, fill = category)) +
   labs(title = "2,500 µM (+)-ABA",
        x = "Binding", y = "")
 
-pdf("../../results/FigureS2/FigureS2D_variant_distr_high_v2.pdf", width = 6, height = 10)
-print(out.S2D_high)
+pdf("../../results/FigureS2/FigureS2E_variant_distr_high_v2.pdf", width = 6, height = 10)
+print(out.S2E_high)
 dev.off()
 
 
