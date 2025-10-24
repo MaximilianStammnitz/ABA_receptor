@@ -1,7 +1,7 @@
 # The genetic architecture of an allosteric hormone receptor
 # Maximilian R. Stammnitz & Ben Lehner
 # bioRxiv link: https://www.biorxiv.org/content/10.1101/2025.05.30.656975v1
-# 31.05.2025
+# 23.10.2025
 # © M.R.S. (maximilian.stammnitz@crg.eu)
 
 ###########################################################
@@ -14,7 +14,8 @@
 
 ## Libraries
 packages <- c("stringr", "readxl", "growthrates", "drc", 
-              "scales", "reshape", "ggplot2", "ggtext", "cowplot")
+              "scales", "reshape", "ggplot2", "ggtext", "cowplot",
+              "rlang")
 
 ## Install missing packages
 install_if_missing <- function(pkg) {if (!requireNamespace(pkg, quietly = TRUE)) install.packages(pkg)}
@@ -124,8 +125,6 @@ colnames(parameters.Hill.TECAN) <- c("Hill", "B[0]", "B[inf]", "EC50",
 rownames(parameters.Hill.TECAN) <- names(PYL1.ABI1.TECAN.muts.rates)
 
 ## Calculate and plot all the dose-response curves with the 4-parametric Hill model
-#pdf("../results/FigureS3B_all_curves.pdf", height = 15, width = 18)
-#pdf("../results/FigureS3B_inverter_curves.pdf", height = 15, width = 18)
 for(i in 1:nrow(parameters.Hill.TECAN)){
   
   print(i)
@@ -188,43 +187,6 @@ for(i in 1:nrow(parameters.Hill.TECAN)){
     
     ### plot curve
     tmp.PYL1.drc.in$concentration[1] <- 9.062741e-03/3.5/3.5/3.5 ## "0-conc." positioning for log scale
-    # print(ggplot(tmp.PYL1.drc.in, aes(x = concentration, y = GR)) +
-    #         geom_ribbon(data = tmp.PYL1.drc.Hill.predict.newdata,
-    #                     aes(x = conc, y = p, ymin = pmin, ymax = pmax),
-    #                     alpha = 0.2, fill = "grey50") +
-    #         geom_point(data = tmp.PYL1.drc.in, aes(x = concentration, y = GR),
-    #                    color = "black", size = 10) +
-    #         geom_line(data = tmp.PYL1.drc.Hill.predict.newdata, aes(x = conc, y = p), linewidth = 1.5) +
-    #         scale_x_log10(breaks = c(9.062741e-03/3.5/3.5/3.5, 0.01, 0.1, 1, 10, 100, 1000),
-    #                       labels = c(0, 0.01, 0.1, 1, 10, 100, "1,000"),
-    #                       limits = c(9.062741e-03/3.5/3.5/3.5, 5000)) +
-    #         scale_y_continuous(breaks = seq(from = 0, to = 140, length.out = 8), limits = c(-20000, 20000)) +
-    #         coord_cartesian(ylim = c(-5, 150)) +
-    #         annotate("text",
-    #                  x = 9.062741e-03/3.5/3.5/3.5,
-    #                  y = 140,
-    #                  label = bquote(italic(R)^2 == .(format(parameters.Hill.TECAN[i,"R^2"], digits = 2))),  ##
-    #                  hjust = 0, size = 25, color = "black") +
-    #         theme_classic(base_size = 50) +
-    #         theme(plot.title = element_markdown(),
-    #               plot.subtitle = element_markdown(size = 20),
-    #               title = element_text(size = 40),
-    #               axis.text = element_text(size = 40),
-    #               axis.line.x = element_line(size = 1, color = 'black'),
-    #               axis.line.y = element_line(size = 1, color = 'black'),
-    #               axis.title.x = element_text(family = 'Helvetica', colour = 'black', size = 50, vjust = -1),
-    #               axis.title.y = element_text(family = 'Helvetica', colour = 'black', size = 50, vjust = 3),
-    #               legend.position = "none",
-    #               text = element_text(family="Helvetica"),
-    #               plot.margin = unit(c(2, 2, 2, 2),"cm")) +
-    #         labs(x = "(+)-ABA conc. (µM)",
-    #              y = "Binding (library sequencing)",
-    #              title = rownames(parameters.Hill.TECAN)[i],
-    #              subtitle = paste0("Hill parameters: B[0] = ", round(parameters.Hill.TECAN[i,"B[0]"],3), if(!is.na(parameters.Hill.TECAN[i,"B[0] P"])){if(parameters.Hill.TECAN[i,"B[0] P"] < 0.05){"*"}},
-    #                                ", B[inf] = ", round(parameters.Hill.TECAN[i,"B[inf]"],3), if(!is.na(parameters.Hill.TECAN[i,"B[inf] P"])){if(parameters.Hill.TECAN[i,"B[inf] P"] < 0.05){"*"}},
-    #                                ", EC50 = ", round(parameters.Hill.TECAN[i,"EC50"],3), if(!is.na(parameters.Hill.TECAN[i,"EC50 P"])){if(parameters.Hill.TECAN[i,"EC50 P"] < 0.05){"*"}},
-    #                                ", Hill = ", round(parameters.Hill.TECAN[i,"Hill"],3), if(!is.na(parameters.Hill.TECAN[i,"Hill P"])){if(parameters.Hill.TECAN[i,"Hill P"] < 0.05){"*"}})))
-
     rm(tmp.PYL1.drc, tmp.PYL1.drc.Hill.predict, tmp.PYL1.drc.Hill.predict.newdata, tmp.PYL1.drc.in)
     
   }
@@ -237,31 +199,39 @@ for(i in 1:nrow(parameters.Hill.TECAN)){
 #############
 
 ## summarise data
-out.all <- matrix(NA, nrow = 22, ncol = 16)
-colnames(out.all) <- c("bulk_B0", "bulk_B0_SE", "bulk_Binf", "bulk_Binf_SE", 
-                       "bulk_EC50", "bulk_EC50_SE", "bulk_Hill", "bulk_Hill_SE",
-                       "TECAN_B0", "TECAN_B0_SE", "TECAN_Binf", "TECAN_Binf_SE", 
-                       "TECAN_EC50", "TECAN_EC50_SE", "TECAN_Hill", "TECAN_Hill_SE")
+out.all <- matrix(NA, nrow = 22, ncol = 26)
+colnames(out.all) <- c("bulk_B0", "bulk_B0_SE", "bulk_B0_P", 
+                       "bulk_Binf", "bulk_Binf_SE", "bulk_Binf_P", 
+                       "bulk_EC50", "bulk_EC50_SE", "bulk_EC50_P", 
+                       "bulk_Hill", "bulk_Hill_SE", "bulk_Hill_P",
+                       "bulk_R2",
+                       "TECAN_B0", "TECAN_B0_SE", "TECAN_B0_P", 
+                       "TECAN_Binf", "TECAN_Binf_SE", "TECAN_Binf_P", 
+                       "TECAN_EC50", "TECAN_EC50_SE", "TECAN_EC50_P", 
+                       "TECAN_Hill", "TECAN_Hill_SE", "TECAN_Hill_P",
+                       "TECAN_R2")
 rownames(out.all) <- c("Q34Y", "Q34I", "E36R", "T38K", "Q39F", 
                        "H48C", "D80M", "P82G", "Y85P", "H87A",
                        "H87P", "A116R", "T118I", "L125I", "V132P", 
                        "I137G", "L144A", "E161A", "E171K", "A190E",
                        "R195M", "A202T")
+
 for(i in 1:nrow(out.all)){
   tmp.name <- rownames(out.all)[i]
   tmp.id1 <- match(tmp.name, rownames(parameters.Hill))
-  out1 <- parameters.Hill[tmp.id1,c(2,6,3,7,4,8,1,5)]
+  out1 <- parameters.Hill[tmp.id1,c(2,6,10,3,7,11,4,8,12,1,5,9,16)]
   tmp.id2 <- match(tmp.name, rownames(parameters.Hill.TECAN))
-  out2 <- parameters.Hill.TECAN[tmp.id2,c(2,6,3,7,4,8,1,5)]
+  out2 <- parameters.Hill.TECAN[tmp.id2,c(2,6,10,3,7,11,4,8,12,1,5,9,16)]
   out.all[i,] <- c(out1, out2)
 }
 out.all <- as.data.frame(out.all)
+out.all <- out.all[which(out.all$bulk_R2 > 0.9 & out.all$TECAN_R2 > 0.9),]
 
 ## raw linear regression
-p.B0 <- summary(lm(out.all$bulk_B0 ~ out.all$TECAN_B0))$coefficients[2,4] ## P = 3.548e-05
-p.Binf <- summary(lm(out.all$bulk_Binf ~ out.all$TECAN_Binf))$coefficients[2,4] ## P = 0.001079
-p.EC50 <- summary(lm(log10(out.all$bulk_EC50) ~ log10(out.all$TECAN_EC50)))$coefficients[2,4] ## P = 0.002154
-p.Hill <- summary(lm(log10(out.all$bulk_Hill) ~ log10(out.all$TECAN_Hill)))$coefficients[2,4] ## P = 0.6181
+p.B0 <- summary(lm(out.all$bulk_B0 ~ out.all$TECAN_B0))$coefficients[2,4]
+p.Binf <- summary(lm(out.all$bulk_Binf ~ out.all$TECAN_Binf))$coefficients[2,4]
+p.EC50 <- summary(lm(log10(out.all$bulk_EC50) ~ log10(out.all$TECAN_EC50)))$coefficients[2,4]
+p.Hill <- summary(lm(log10(out.all$bulk_Hill) ~ log10(out.all$TECAN_Hill)))$coefficients[2,4]
 
 ## B0
 r.B0 <- cor(x = out.all$bulk_B0, y = out.all$TECAN_B0, 
@@ -273,11 +243,13 @@ out.S3B_B0 <- ggplot(out.all, aes(x = `TECAN_B0`, y = `bulk_B0`)) +
   coord_cartesian(xlim = c(-5, 130), ylim = c(-5, 130)) +
   geom_point(data = out.all,
              mapping = aes(x = `TECAN_B0`, y = `bulk_B0`),
-             color = "black", size = 6) +
-  geom_errorbarh(aes(xmin = pmax(`TECAN_B0` - `TECAN_B0_SE`, 0), 
-                     xmax = `TECAN_B0` + `TECAN_B0_SE`), color = "black") +
+             color = "black", size = 5, shape = 16) +
+  geom_errorbar(aes(xmin = pmax(`TECAN_B0` - `TECAN_B0_SE`, 0), 
+                    xmax = `TECAN_B0` + `TECAN_B0_SE`), 
+                color = "black", linewidth = 0.75, height = 0) +
   geom_errorbar(aes(ymin = pmax(`bulk_B0` - `bulk_B0_SE`, 0),
-                    ymax = `bulk_B0` + `bulk_B0_SE`), color = "black") +
+                    ymax = `bulk_B0` + `bulk_B0_SE`), 
+                color = "black", linewidth = 0.75, width = 0) +
   geom_smooth(data = out.all,
               mapping = aes(x = `TECAN_B0`, y = `bulk_B0`),
               method = 'lm',
@@ -286,8 +258,9 @@ out.S3B_B0 <- ggplot(out.all, aes(x = `TECAN_B0`, y = `bulk_B0`)) +
   annotate("text",
            x = 0,
            y = 120,
-           label = bquote(italic(r) == .(format(r.B0, digits = 2, nsmall = 2)) ~ 
-                            ", " ~ italic(P) == .(format(p.B0, digits = 2, nsmall = 2))),
+           label = expr_text(bquote(italic(r) == .(format(r.B0, digits = 2, nsmall = 2)) ~ 
+                                      ", " ~ italic(P) == .(format(p.B0, digits = 2, nsmall = 2)))),
+           parse = T,
            hjust = 0, size = 15, color = "black") +
   theme_classic(base_size = 50) +
   theme(plot.title = element_markdown(),
@@ -313,11 +286,13 @@ out.S3B_Binf <- ggplot(out.all, aes(x = `TECAN_Binf`, y = `bulk_Binf`)) +
   coord_cartesian(xlim = c(-5, 130), ylim = c(-5, 130)) +
   geom_point(data = out.all,
              mapping = aes(x = `TECAN_Binf`, y = `bulk_Binf`),
-             color = "black", size = 6) +
-  geom_errorbarh(aes(xmin = pmax(`TECAN_Binf` - `TECAN_Binf_SE`, 0),
-                     xmax = `TECAN_Binf` + `TECAN_Binf_SE`), color = "black") +
+             color = "black", size = 5, shape = 16) +
+  geom_errorbar(aes(xmin = pmax(`TECAN_Binf` - `TECAN_Binf_SE`, 0),
+                    xmax = `TECAN_Binf` + `TECAN_Binf_SE`), 
+                color = "black", linewidth = 0.75, height = 0) +
   geom_errorbar(aes(ymin = pmax(`bulk_Binf` - `bulk_Binf_SE`, 0),
-                    ymax = `bulk_Binf` + `bulk_Binf_SE`), color = "black") +
+                    ymax = `bulk_Binf` + `bulk_Binf_SE`), 
+                color = "black", linewidth = 0.75, width = 0) +
   geom_smooth(data = out.all,
               mapping = aes(x = `TECAN_Binf`, y = `bulk_Binf`),
               method = 'lm',
@@ -326,8 +301,9 @@ out.S3B_Binf <- ggplot(out.all, aes(x = `TECAN_Binf`, y = `bulk_Binf`)) +
   annotate("text",
            x = 0,
            y = 120,
-           label = bquote(italic(r) == .(format(r.Binf, digits = 2, nsmall = 2)) ~ 
-                            ", " ~ italic(P) == .(format(p.Binf, digits = 2, nsmall = 2))),
+           label = expr_text(bquote(italic(r) == .(format(r.Binf, digits = 2, nsmall = 2)) ~ 
+                                      ", " ~ italic(P) == .(format(p.Binf, digits = 2, nsmall = 2)))),
+           parse = T,
            hjust = 0, size = 15, color = "black") +
   theme_classic(base_size = 50) +
   theme(plot.title = element_markdown(),
@@ -357,11 +333,13 @@ out.S3B_EC50 <- ggplot(out.all, aes(x = `TECAN_EC50`, y = `bulk_EC50`)) +
   coord_cartesian(xlim = c(0.001, 10000), ylim = c(0.001, 10000), expand = T) +
   geom_point(data = out.all,
              mapping = aes(x = `TECAN_EC50`, y = `bulk_EC50`),
-             color = "black", size = 6) +
-  geom_errorbarh(aes(xmin = pmax(TECAN_EC50 - TECAN_EC50_SE, 0.001),
-                     xmax = TECAN_EC50 + TECAN_EC50_SE), color = "black") +
+             color = "black", size = 5, shape = 16) +
+  geom_errorbar(aes(xmin = pmax(TECAN_EC50 - TECAN_EC50_SE, 0.001),
+                    xmax = TECAN_EC50 + TECAN_EC50_SE), 
+                color = "black", linewidth = 0.75, height = 0) +
   geom_errorbar(aes(ymin = pmax(`bulk_EC50` - `bulk_EC50_SE`, 0.001),
-                    ymax = `bulk_EC50` + `bulk_EC50_SE`), color = "black") +
+                    ymax = `bulk_EC50` + `bulk_EC50_SE`), 
+                color = "black", linewidth = 0.75, width = 0) +
   geom_smooth(data = out.all,
               mapping = aes(x = `TECAN_EC50`, y = `bulk_EC50`),
               method = 'lm',
@@ -370,8 +348,9 @@ out.S3B_EC50 <- ggplot(out.all, aes(x = `TECAN_EC50`, y = `bulk_EC50`)) +
   annotate("text",
            x = 0.0018,
            y = 3025,
-           label = bquote(italic(r) == .(format(r.EC50, digits = 2, nsmall = 2)) ~ 
-                            ", " ~ italic(P) == .(format(p.EC50, digits = 2, nsmall = 2))),
+           label = expr_text(bquote(italic(r) == .(format(r.EC50, digits = 2, nsmall = 2)) ~ 
+                                      ", " ~ italic(P) == .(format(p.EC50, digits = 2, nsmall = 2)))),
+           parse = T,
            hjust = 0, size = 15, color = "black") +
   theme_classic(base_size = 50) +
   theme(plot.title = element_markdown(),
@@ -401,16 +380,19 @@ out.S3B_Hill <- ggplot(out.all, aes(x = `TECAN_Hill`, y = `bulk_Hill`)) +
   coord_cartesian(xlim = c(0.1, 10), ylim = c(0.1, 10), expand = T) +
   geom_point(data = out.all,
              mapping = aes(x = `TECAN_Hill`, y = `bulk_Hill`),
-             color = "black", size = 6) +
-  geom_errorbarh(aes(xmin = pmax(TECAN_Hill - TECAN_Hill_SE, 0.1),
-                     xmax = TECAN_Hill + TECAN_Hill_SE), color = "black") +
+             color = "black", size = 5, shape = 16) +
+  geom_errorbar(aes(xmin = pmax(TECAN_Hill - TECAN_Hill_SE, 0.1),
+                    xmax = TECAN_Hill + TECAN_Hill_SE), 
+                color = "black", linewidth = 0.75, height = 0) +
   geom_errorbar(aes(ymin = pmax(`bulk_Hill` - `bulk_Hill_SE`, 0.1),
-                    ymax = `bulk_Hill` + `bulk_Hill_SE`), color = "black") +
+                    ymax = `bulk_Hill` + `bulk_Hill_SE`), 
+                color = "black", linewidth = 0.75, width = 0) +
   annotate("text",
            x = 0.1186,
            y = 7.1,
-           label = bquote(italic(r) == .(format(r.Hill, digits = 2, nsmall = 2)) ~ 
-                            ", " ~ italic(P) == .(format(p.Hill, digits = 4, nsmall = 4))),
+           label = expr_text(bquote(italic(r) == .(format(r.Hill, digits = 2, nsmall = 2)) ~ 
+                            ", " ~ italic(P) == .(format(p.Hill, digits = 4, nsmall = 4)))),
+           parse = T,
            hjust = 0, size = 15, color = "black") +
   theme_classic(base_size = 50) +
   theme(plot.title = element_markdown(),
@@ -436,13 +418,13 @@ dev.off()
 ################
 
 # sessionInfo()
-# R version 4.4.1 (2024-06-14)
+# R version 4.5.1 (2025-06-13)
 # Platform: aarch64-apple-darwin20
-# Running under: macOS Sonoma 14.6.1
+# Running under: macOS Sequoia 15.6.1
 # 
 # Matrix products: default
 # BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib 
-# LAPACK: /Library/Frameworks/R.framework/Versions/4.4-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.0
+# LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
 # 
 # locale:
 # [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
@@ -454,15 +436,12 @@ dev.off()
 # [1] stats     graphics  grDevices utils     datasets  methods   base     
 # 
 # other attached packages:
-# [1] cowplot_1.1.3     ggtext_0.1.2      ggplot2_3.5.1     reshape_0.8.9     scales_1.3.0      drc_3.0-1         MASS_7.3-64      
-# [8] growthrates_0.8.4 deSolve_1.40      lattice_0.22-6    readxl_1.4.3      stringr_1.5.1    
+# [1] rlang_1.1.6       cowplot_1.2.0     ggtext_0.1.2      ggplot2_4.0.0     reshape_0.8.10    scales_1.4.0      drc_3.0-1         MASS_7.3-65       growthrates_0.8.5 deSolve_1.40      lattice_0.22-7    readxl_1.4.5     
+# [13] stringr_1.5.2    
 # 
 # loaded via a namespace (and not attached):
-# [1] generics_0.1.3    sandwich_3.1-1    xml2_1.3.6        gtools_3.9.5      stringi_1.8.4     FME_1.3.6.3       magrittr_2.0.3   
-# [8] grid_4.4.1        mvtnorm_1.3-3     cellranger_1.1.0  plyr_1.8.9        Matrix_1.7-2      Formula_1.2-5     survival_3.8-3   
-# [15] multcomp_1.4-28   mgcv_1.9-1        TH.data_1.1-3     codetools_0.2-20  abind_1.4-8       cli_3.6.4         crayon_1.5.3     
-# [22] rlang_1.1.5       munsell_0.5.1     splines_4.4.1     withr_3.0.2       plotrix_3.8-4     rootSolve_1.8.2.4 tools_4.4.1      
-# [29] parallel_4.4.1    coda_0.19-4.1     minpack.lm_1.2-4  minqa_1.2.8       dplyr_1.1.4       colorspace_2.1-1  vctrs_0.6.5      
-# [36] R6_2.6.1          zoo_1.8-12        lifecycle_1.0.4   car_3.1-3         pkgconfig_2.0.3   pillar_1.10.1     gtable_0.3.6     
-# [43] glue_1.8.0        Rcpp_1.0.14       tidyselect_1.2.1  tibble_3.2.1      rstudioapi_0.17.1 farver_2.1.2      nlme_3.1-167     
-# [50] carData_3.0-5     compiler_4.4.1    gridtext_0.1.5   
+# [1] sandwich_3.1-1     generics_0.1.4     xml2_1.4.0         gtools_3.9.5       stringi_1.8.7      FME_1.3.6.4        magrittr_2.0.4     grid_4.5.1         RColorBrewer_1.1-3 mvtnorm_1.3-3      cellranger_1.1.0   plyr_1.8.9        
+# [13] Matrix_1.7-4       Formula_1.2-5      survival_3.8-3     multcomp_1.4-28    mgcv_1.9-3         TH.data_1.1-4      codetools_0.2-20   abind_1.4-8        cli_3.6.5          crayon_1.5.3       splines_4.5.1      withr_3.0.2       
+# [25] plotrix_3.8-4      rootSolve_1.8.2.4  tools_4.5.1        parallel_4.5.1     coda_0.19-4.1      minpack.lm_1.2-4   minqa_1.2.8        dplyr_1.1.4        vctrs_0.6.5        R6_2.6.1           zoo_1.8-14         lifecycle_1.0.4   
+# [37] car_3.1-3          pkgconfig_2.0.3    pillar_1.11.1      gtable_0.3.6       glue_1.8.0         Rcpp_1.1.0         tidyselect_1.2.1   tibble_3.3.0       farver_2.1.2       nlme_3.1-168       carData_3.0-5      compiler_4.5.1    
+# [49] S7_0.2.0           gridtext_0.1.5 
