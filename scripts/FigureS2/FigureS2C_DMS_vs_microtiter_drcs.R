@@ -333,10 +333,10 @@ rm(packages,results,setup,tecan.30,i,k,tmp.out,WT.PYL1.drc,WT.PYL1.drc.par)
 ##################################
 
 ## Load raw measurements
-load("../../data/DiMSum/PYL1-ABI1/PYL1-ABI1_preprocessed_v2.RData")
+load("../../data/DiMSum/PYL1-ABI1/PYL1-ABI1_preprocessed.RData")
 
 ## Load dose-response curve metrics
-load("../../data/DRCs/PYL1-ABI1_parameters_Hill_v2.RData")
+load("../../data/DRCs/PYL1-ABI1_parameters_Hill.RData")
 
 ## Which TECAN variants have high conf. library fits?
 parameters.Hill.lib <- parameters.Hill[match(names(PYL1.TECAN.curves.gr), rownames(parameters.Hill)),]
@@ -503,33 +503,7 @@ drc.plot.DMS <- function(curves, datapoints, variant){
   
 }
 
-pdf("../../results/FigureS2/FigureS2C_curves_TECAN.pdf", height = 12, width = 100)
-grid.arrange(drc.plot.microtiter(PYL1.TECAN.curves.gr.predict, PYL1.TECAN.curves.gr, "WT"), 
-             drc.plot.microtiter(PYL1.TECAN.curves.gr.predict, PYL1.TECAN.curves.gr, "Q34R"),
-             drc.plot.microtiter(PYL1.TECAN.curves.gr.predict, PYL1.TECAN.curves.gr, "Q34I"),
-             drc.plot.microtiter(PYL1.TECAN.curves.gr.predict, PYL1.TECAN.curves.gr, "E36R"),
-             drc.plot.microtiter(PYL1.TECAN.curves.gr.predict, PYL1.TECAN.curves.gr, "H87A"),
-             drc.plot.microtiter(PYL1.TECAN.curves.gr.predict, PYL1.TECAN.curves.gr, "H87V"),
-             drc.plot.microtiter(PYL1.TECAN.curves.gr.predict, PYL1.TECAN.curves.gr, "H87P"),
-             drc.plot.microtiter(PYL1.TECAN.curves.gr.predict, PYL1.TECAN.curves.gr, "A116S"),
-             drc.plot.microtiter(PYL1.TECAN.curves.gr.predict, PYL1.TECAN.curves.gr, "S119A"),
-             ncol = 9, respect = F)
-dev.off()
-
-pdf("../../results/FigureS2/FigureS2C_curves_DMS.pdf", height = 12, width = 100)
-grid.arrange(drc.plot.DMS(PYL1.ABI1.DMS.curves, PYL1.ABI1.keyvars, "WT"), 
-             drc.plot.DMS(PYL1.ABI1.DMS.curves, PYL1.ABI1.keyvars, "Q34R"),
-             drc.plot.DMS(PYL1.ABI1.DMS.curves, PYL1.ABI1.keyvars, "Q34I"),
-             drc.plot.DMS(PYL1.ABI1.DMS.curves, PYL1.ABI1.keyvars, "E36R"),
-             drc.plot.DMS(PYL1.ABI1.DMS.curves, PYL1.ABI1.keyvars, "H87A"),
-             drc.plot.DMS(PYL1.ABI1.DMS.curves, PYL1.ABI1.keyvars, "H87V"),
-             drc.plot.DMS(PYL1.ABI1.DMS.curves, PYL1.ABI1.keyvars, "H87P"),
-             drc.plot.DMS(PYL1.ABI1.DMS.curves, PYL1.ABI1.keyvars, "A116S"),
-             drc.plot.DMS(PYL1.ABI1.DMS.curves, PYL1.ABI1.keyvars, "S119A"),
-             ncol = 9, respect = F)
-dev.off()
-
-pdf("../../results/FigureS2/FigureS2C_curves_both.pdf", height = 25, width = 100)
+pdf("../../results/FigureS2/FigureS2C_curves_microtiter_vs_DMS.pdf", height = 25, width = 100)
 grid.arrange(drc.plot.microtiter(PYL1.TECAN.curves.gr.predict, PYL1.TECAN.curves.gr, "WT"), 
              drc.plot.microtiter(PYL1.TECAN.curves.gr.predict, PYL1.TECAN.curves.gr, "Q34R"),
              drc.plot.microtiter(PYL1.TECAN.curves.gr.predict, PYL1.TECAN.curves.gr, "Q34I"),
@@ -558,7 +532,7 @@ dev.off()
 # sessionInfo()
 # R version 4.5.1 (2025-06-13)
 # Platform: aarch64-apple-darwin20
-# Running under: macOS Sonoma 14.6.1
+# Running under: macOS Sequoia 15.6.1
 # 
 # Matrix products: default
 # BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib 
@@ -571,19 +545,16 @@ dev.off()
 # tzcode source: internal
 # 
 # attached base packages:
-# [1] stats     graphics  grDevices utils     datasets  methods   base     
+# [1] grid      stats     graphics  grDevices utils     datasets  methods   base     
 # 
 # other attached packages:
-# [1] rlang_1.1.6       ggtext_0.1.2      ggplot2_4.0.0     drc_3.0-1         MASS_7.3-65       reshape_0.8.10    growthrates_0.8.5
-# [8] deSolve_1.40      lattice_0.22-7    readxl_1.4.5     
+# [1] gridExtra_2.3     rlang_1.1.6       ggtext_0.1.2      ggplot2_4.0.0     scales_1.4.0      drc_3.0-1         MASS_7.3-65       reshape_0.8.10   
+# [9] growthrates_0.8.5 deSolve_1.40      lattice_0.22-7    readxl_1.4.5     
 # 
 # loaded via a namespace (and not attached):
-# [1] sandwich_3.1-1     generics_0.1.4     xml2_1.4.0         gtools_3.9.5       FME_1.3.6.4        magrittr_2.0.3    
-# [7] grid_4.5.1         RColorBrewer_1.1-3 mvtnorm_1.3-3      cellranger_1.1.0   plyr_1.8.9         Matrix_1.7-4      
-# [13] Formula_1.2-5      survival_3.8-3     multcomp_1.4-28    mgcv_1.9-3         scales_1.4.0       TH.data_1.1-4     
-# [19] codetools_0.2-20   abind_1.4-8        cli_3.6.5          crayon_1.5.3       splines_4.5.1      withr_3.0.2       
-# [25] plotrix_3.8-4      rootSolve_1.8.2.4  tools_4.5.1        parallel_4.5.1     coda_0.19-4.1      minpack.lm_1.2-4  
-# [31] minqa_1.2.8        dplyr_1.1.4        vctrs_0.6.5        R6_2.6.1           zoo_1.8-14         lifecycle_1.0.4   
-# [37] car_3.1-3          pkgconfig_2.0.3    pillar_1.11.0      gtable_0.3.6       glue_1.8.0         Rcpp_1.1.0        
-# [43] tibble_3.3.0       tidyselect_1.2.1   rstudioapi_0.17.1  farver_2.1.2       nlme_3.1-168       labeling_0.4.3    
-# [49] carData_3.0-5      compiler_4.5.1     S7_0.2.0           gridtext_0.1.5
+# [1] sandwich_3.1-1     generics_0.1.4     xml2_1.4.0         gtools_3.9.5       FME_1.3.6.4        magrittr_2.0.4     RColorBrewer_1.1-3 mvtnorm_1.3-3     
+# [9] cellranger_1.1.0   plyr_1.8.9         Matrix_1.7-4       Formula_1.2-5      survival_3.8-3     multcomp_1.4-28    TH.data_1.1-4      codetools_0.2-20  
+# [17] abind_1.4-8        cli_3.6.5          crayon_1.5.3       splines_4.5.1      withr_3.0.2        plotrix_3.8-4      rootSolve_1.8.2.4  tools_4.5.1       
+# [25] parallel_4.5.1     coda_0.19-4.1      minpack.lm_1.2-4   minqa_1.2.8        dplyr_1.1.4        vctrs_0.6.5        R6_2.6.1           zoo_1.8-14        
+# [33] lifecycle_1.0.4    car_3.1-3          pkgconfig_2.0.3    pillar_1.11.1      gtable_0.3.6       glue_1.8.0         Rcpp_1.1.0         tibble_3.3.0      
+# [41] tidyselect_1.2.1   farver_2.1.2       carData_3.0-5      compiler_4.5.1     S7_0.2.0           gridtext_0.1.5   
