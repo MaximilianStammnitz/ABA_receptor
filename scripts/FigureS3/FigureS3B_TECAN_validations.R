@@ -1,7 +1,7 @@
 # The genetic architecture of an allosteric hormone receptor
 # Maximilian R. Stammnitz & Ben Lehner
 # bioRxiv link: https://www.biorxiv.org/content/10.1101/2025.05.30.656975v1
-# 23.10.2025
+# 24.10.2025
 # © M.R.S. (maximilian.stammnitz@crg.eu)
 
 ###########################################################
