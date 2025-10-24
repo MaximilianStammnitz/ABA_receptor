@@ -5,7 +5,7 @@
 # © M.R.S. (maximilian.stammnitz@crg.eu)
 
 ############################################################################
-## Supplementary Figure 2C - Potency shift of (+)-ABA GluePCA vs in vitro ##
+## Supplementary Figure 2D - Potency shift of (+)-ABA GluePCA vs in vitro ##
 ############################################################################
 
 
@@ -111,9 +111,9 @@ for(i in 1:1000){
 out.cor <- as.data.frame(out.cor)
 
 ## ggPlots
-pdf("../../results/FigureS2/FigureS2C_potency_shift.pdf", height = 15, width = 1.130682*18)
+pdf("../../results/FigureS2/FigureS2D_potency_shift.pdf", height = 15, width = 1.130682*18)
 
-out.S2C <- ggplot(out.cor[-1,], aes(x = `conc`, y = `corr`)) +
+out.S2D <- ggplot(out.cor[-1,], aes(x = `conc`, y = `corr`)) +
   geom_line(data = out.cor[-1,],
              mapping = aes(x = `conc`, y = `corr`),
              color = "black", size = 3) +
@@ -163,7 +163,7 @@ out.S2C <- ggplot(out.cor[-1,], aes(x = `conc`, y = `corr`)) +
   labs(x = "(+)-ABA conc. (µM)",
        y = expression("Pearson's r (GluePCA vs. 10 µM" ~ italic("in vitro") ~ ")"))
 
-print(out.S2C)
+print(out.S2D)
 
 dev.off()
 
@@ -215,7 +215,7 @@ out.miya.136uM.df <- as.data.frame(cbind("miyazono" = miyazono, "136 µM" = PYL1
 r.10 <- cor(x = out.miya.10uM.df$miyazono, y = out.miya.10uM.df$`10 µM`, method = "pearson")
 r.136 <- cor(x = out.miya.136uM.df$miyazono, y = out.miya.136uM.df$`136 µM`, method = "pearson")
 
-out.S2C_obs <- ggplot(out.miya.10uM.df, aes(x = `miyazono`, y = `10 µM`)) +
+out.S2D_obs <- ggplot(out.miya.10uM.df, aes(x = `miyazono`, y = `10 µM`)) +
   scale_x_continuous(breaks = seq(f = 0, t = 100, length.out = 6), limits = c(-1000, 1000)) +
   scale_y_continuous(breaks = seq(f = 0, t = 100, length.out = 6), limits = c(-1000, 1000)) +
   coord_cartesian(xlim = c(-5, 121), ylim = c(-5, 115)) +
@@ -249,11 +249,11 @@ out.S2C_obs <- ggplot(out.miya.10uM.df, aes(x = `miyazono`, y = `10 µM`)) +
   labs(x = "Relative PYL1/ABI1 Binding (Miyazono et al., 2009)",
        y = "Relative PYL1/ABI1 Binding (this study, 10 µM)")
 
-pdf("../../results/FigureS2/FigureS2C_potency_shift_obs_v2.pdf", height = 15, width = 18)
-print(out.S2C_obs)
+pdf("../../results/FigureS2/FigureS2D_potency_shift_obs_v2.pdf", height = 15, width = 18)
+print(out.S2D_obs)
 dev.off()
 
-out.S2C_theormax <- ggplot(out.miya.136uM.df, aes(x = `miyazono`, y = `136 µM`)) +
+out.S2D_theormax <- ggplot(out.miya.136uM.df, aes(x = `miyazono`, y = `136 µM`)) +
   scale_x_continuous(breaks = seq(f = 0, t = 100, length.out = 6), limits = c(-100, 200)) +
   scale_y_continuous(breaks = seq(f = 0, t = 100, length.out = 6), limits = c(-100, 200)) +
   coord_cartesian(xlim = c(-5, 121), ylim = c(-5, 115)) +
@@ -287,8 +287,8 @@ out.S2C_theormax <- ggplot(out.miya.136uM.df, aes(x = `miyazono`, y = `136 µM`)
   labs(x = "Relative PYL1/ABI1 Binding (Miyazono et al., 2009)",
        y = "Relative PYL1/ABI1 Binding (this study, 136.5 µM)")
 
-pdf("../../results/FigureS2/FigureS2C_potency_shift_theor_max_v2.pdf", height = 15, width = 18)
-print(out.S2C_theormax)
+pdf("../../results/FigureS2/FigureS2D_potency_shift_theor_max_v2.pdf", height = 15, width = 18)
+print(out.S2D_theormax)
 dev.off()
 
 
