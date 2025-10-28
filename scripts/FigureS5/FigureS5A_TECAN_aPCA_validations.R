@@ -134,10 +134,10 @@ out.all[,"tecan_mean"] <- out.all[,"tecan_mean"] * c(out.all["WT","bulk_mean"] /
 out.all <- as.data.frame(out.all)
 
 ## to calculate Pearson's coefficients
-r.out <- cor(x = out.all[,"bulk_mean"],
-         y = out.all[,"tecan_mean"],
+r.out <- cor(x = out.all[-1,"bulk_mean"],
+         y = out.all[-1,"tecan_mean"],
          method = "pearson", use = "complete.obs")
-p.out <- summary(lm(out.all[,"bulk_mean"] ~ out.all[,"tecan_mean"]))$coefficients[2,4]
+p.out <- summary(lm(out.all[-1,"bulk_mean"] ~ out.all[-1,"tecan_mean"]))$coefficients[2,4]
 
 pdf("../../results/FigureS5/FigureS5A_abundancePCA_validation.pdf", height = 15, width = 18)
 
@@ -152,16 +152,7 @@ out.S5A <- ggplot(out.all, aes(x = `tecan_mean`, y = `bulk_mean`)) +
   geom_point(data = out.all,
              mapping = aes(x = `tecan_mean`, y = `bulk_mean`),
              color = "black", size = 5, shape = 16) +
-  geom_errorbar(data = out.all["WT",],
-                aes(xmin = `tecan_mean` - `tecan_sd`, xmax = `tecan_mean` + `tecan_sd`),
-                color = "darkorange", linewidth = 0.5, height = 0) +
-  geom_errorbar(data = out.all["WT",],
-                aes(ymin = `bulk_mean` - `bulk_sd`, ymax = `bulk_mean` + `bulk_sd`),
-                color = "darkorange", linewidth = 0.5, width = 0) +
-  geom_point(data = out.all["WT",],
-             mapping = aes(x = `tecan_mean`, y = `bulk_mean`),
-             color = "darkorange", size = 7, shape = 16) +
-  geom_smooth(data = out.all,
+  geom_smooth(data = out.all[-1,],
               mapping = aes(x = `tecan_mean`, y = `bulk_mean`),
               method = 'lm',
               color = "black", fullrange = T,
