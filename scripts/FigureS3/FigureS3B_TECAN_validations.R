@@ -123,6 +123,22 @@ for(i in 1:length(PYL1.ABI1.TECAN.plate1.curves.auc)){
 }
 PYL1.ABI1.TECAN.plate1.curves.auc <- lapply(PYL1.ABI1.TECAN.plate1.curves.auc, rev)
 
+## take mean value of replicates
+for(i in 1:length(PYL1.ABI1.TECAN.plate1.curves.auc)){
+  PYL1.ABI1.TECAN.plate1.curves.auc[[i]] <- c(mean(PYL1.ABI1.TECAN.plate1.curves.auc[[i]][1:2]),
+                                              mean(PYL1.ABI1.TECAN.plate1.curves.auc[[i]][3:4]),
+                                              mean(PYL1.ABI1.TECAN.plate1.curves.auc[[i]][5:6]),
+                                              mean(PYL1.ABI1.TECAN.plate1.curves.auc[[i]][7:8]),
+                                              mean(PYL1.ABI1.TECAN.plate1.curves.auc[[i]][9:10]),
+                                              mean(PYL1.ABI1.TECAN.plate1.curves.auc[[i]][11:12]),
+                                              mean(PYL1.ABI1.TECAN.plate1.curves.auc[[i]][13:14]),
+                                              mean(PYL1.ABI1.TECAN.plate1.curves.auc[[i]][15:16]),
+                                              mean(PYL1.ABI1.TECAN.plate1.curves.auc[[i]][17:18]),
+                                              mean(PYL1.ABI1.TECAN.plate1.curves.auc[[i]][19:20]),
+                                              mean(PYL1.ABI1.TECAN.plate1.curves.auc[[i]][21:22]),
+                                              mean(PYL1.ABI1.TECAN.plate1.curves.auc[[i]][23:24]))
+}
+
 PYL1.ABI1.TECAN.plate2.curves.auc <- vector(mode = "list", length = 31)
 names(PYL1.ABI1.TECAN.plate2.curves.auc) <- unique(c(setup2))
 names(PYL1.ABI1.TECAN.plate2.curves.auc) <- c(names(PYL1.ABI1.TECAN.plate2.curves.auc)[1],
@@ -142,7 +158,7 @@ for(i in 2:11){
 dosages <- rev(dosages)
 
 ## fit plate-specific WT curves
-WT.PYL1.drc.1 <- cbind(PYL1.ABI1.TECAN.plate1.curves.auc$WT[1:24],rep(dosages, each = 2))
+WT.PYL1.drc.1 <- cbind(PYL1.ABI1.TECAN.plate1.curves.auc$WT,dosages)
 class(WT.PYL1.drc.1) <- "numeric"
 WT.PYL1.drc.1 <- as.data.frame(WT.PYL1.drc.1)
 colnames(WT.PYL1.drc.1) <- c("GR", "concentration")
@@ -175,12 +191,10 @@ PYL1.ABI1.TECAN.plate2.curves.auc <- lapply(PYL1.ABI1.TECAN.plate2.curves.auc, f
 #########################
 
 ## from second data set only take the ones not in the first
-PYL1.ABI1.TECAN.curves.auc <- c(PYL1.ABI1.TECAN.plate2.curves.auc[1],
-                                PYL1.ABI1.TECAN.plate1.curves.auc[-1],
+PYL1.ABI1.TECAN.curves.auc <- c(PYL1.ABI1.TECAN.plate1.curves.auc,
                                 PYL1.ABI1.TECAN.plate2.curves.auc[-which(names(PYL1.ABI1.TECAN.plate2.curves.auc) %in% names(PYL1.ABI1.TECAN.plate1.curves.auc))])
 PYL1.ABI1.TECAN.curves.auc <- c(PYL1.ABI1.TECAN.curves.auc[1],
                                 PYL1.ABI1.TECAN.curves.auc[order(as.numeric(substr(names(PYL1.ABI1.TECAN.curves.auc)[-1], 2, nchar(names(PYL1.ABI1.TECAN.curves.auc)[-1]) - 1))) + 1])
-PYL1.ABI1.TECAN.curves.auc <- PYL1.ABI1.TECAN.plate2.curves.auc
 
 
 ## 6. Fit all TECAN curves' dose response profiles ##
@@ -208,11 +222,7 @@ for(i in 1:nrow(parameters.Hill.TECAN)){
   ### model: binding(ABA conc.) = c + ((d-c)/(1 + (e/x)^b))
   
   ### fetch genotype's data
-  #if(length(PYL1.ABI1.TECAN.curves.auc[[i]]) == 12){
-    tmp.PYL1.drc.in <- cbind(PYL1.ABI1.TECAN.curves.auc[[i]][1:12],dosages)
-  #}else if(length(PYL1.ABI1.TECAN.curves.auc[[i]]) == 24){
-  #  tmp.PYL1.drc.in <- cbind(PYL1.ABI1.TECAN.curves.auc[[i]],rep(dosages, each = 2))
-  #}
+  tmp.PYL1.drc.in <- cbind(PYL1.ABI1.TECAN.curves.auc[[i]][1:12],dosages)
   class(tmp.PYL1.drc.in) <- "numeric"
   tmp.PYL1.drc.in <- as.data.frame(tmp.PYL1.drc.in)
   colnames(tmp.PYL1.drc.in) <- c("GR", "concentration")
