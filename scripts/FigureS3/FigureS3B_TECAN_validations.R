@@ -1,7 +1,7 @@
 # The genetic architecture of an allosteric hormone receptor
 # Maximilian R. Stammnitz & Ben Lehner
 # bioRxiv link: https://www.biorxiv.org/content/10.1101/2025.05.30.656975v1
-# 28.10.2025
+# 29.10.2025
 # © M.R.S. (maximilian.stammnitz@crg.eu)
 
 ####################################################################
@@ -170,7 +170,7 @@ names(WT.PYL1.drc.1.par) <- c("Hill", "B[0]", "B[inf]", "EC50")
 WT.PYL1.drc.1.par <- WT.PYL1.drc.1.par[c(2:4,1)]
 WT.PYL1.drc.1.par[4] <- -WT.PYL1.drc.1.par[4]
 
-WT.PYL1.drc.2 <- cbind(PYL1.ABI1.TECAN.plate2.curves.auc$WT[1:12],dosages)
+WT.PYL1.drc.2 <- cbind(PYL1.ABI1.TECAN.plate2.curves.auc$WT[13:24], dosages)
 class(WT.PYL1.drc.2) <- "numeric"
 WT.PYL1.drc.2 <- as.data.frame(WT.PYL1.drc.2)
 colnames(WT.PYL1.drc.2) <- c("GR", "concentration")
@@ -182,9 +182,11 @@ names(WT.PYL1.drc.2.par) <- c("Hill", "B[0]", "B[inf]", "EC50")
 WT.PYL1.drc.2.par <- WT.PYL1.drc.2.par[c(2:4,1)]
 WT.PYL1.drc.2.par[4] <- -WT.PYL1.drc.2.par[4]
 
-## linearly rescale all curves to WT Bmax (100%)
-PYL1.ABI1.TECAN.plate1.curves.auc <- lapply(PYL1.ABI1.TECAN.plate1.curves.auc, function(x){y <- 100*x/WT.PYL1.drc.1.par["B[inf]"]; return(y)})
-PYL1.ABI1.TECAN.plate2.curves.auc <- lapply(PYL1.ABI1.TECAN.plate2.curves.auc, function(x){y <- 100*x/WT.PYL1.drc.2.par["B[inf]"]; return(y)})
+## linearly rescale all curves to WT Bmax (100%) and 0%
+coefs1 <- lm(c(0, 100) ~ c(mean(PYL1.ABI1.TECAN.plate1.curves.auc$L144A[1:10]), WT.PYL1.drc.1.par["B[inf]"]))
+PYL1.ABI1.TECAN.plate1.curves.auc <- lapply(PYL1.ABI1.TECAN.plate1.curves.auc, function(x){y <- x*coefs1$coefficients[[2]] + coefs1$coefficients[[1]]; return(y)})
+coefs2 <- lm(c(0, 100) ~ c(mean(PYL1.ABI1.TECAN.plate2.curves.auc$L144A[1:10]), WT.PYL1.drc.2.par["B[inf]"]))
+PYL1.ABI1.TECAN.plate2.curves.auc <- lapply(PYL1.ABI1.TECAN.plate2.curves.auc, function(x){y <- x*coefs2$coefficients[[2]] + coefs2$coefficients[[1]]; return(y)})
 
 
 ## 5. Unify TECAN data ##
@@ -227,7 +229,7 @@ for(i in 1:nrow(parameters.Hill.TECAN)){
   tmp.PYL1.drc.in <- as.data.frame(tmp.PYL1.drc.in)
   colnames(tmp.PYL1.drc.in) <- c("GR", "concentration")
   
-  ## ignore questionable fits and potential bandstops
+  ## ignore questionable fits and 'bandstops'
   if(!rownames(parameters.Hill.TECAN)[i] %in% c("T118N", "S119N", "V110H", "A116H", "V193H", "V193W")){
 
     ### curve fit
