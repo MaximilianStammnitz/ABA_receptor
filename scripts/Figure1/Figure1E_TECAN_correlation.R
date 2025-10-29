@@ -1,7 +1,7 @@
 # The genetic architecture of an allosteric hormone receptor
 # Maximilian R. Stammnitz & Ben Lehner
 # bioRxiv link: https://www.biorxiv.org/content/10.1101/2025.05.30.656975v1
-# 28.10.2025
+# 29.10.2025
 # © M.R.S. (maximilian.stammnitz@crg.eu)
 
 ###############################################
@@ -111,8 +111,9 @@ names(WT.PYL1.drc.1.par) <- c("Hill", "B[0]", "B[inf]", "EC50")
 WT.PYL1.drc.1.par <- WT.PYL1.drc.1.par[c(2:4,1)]
 WT.PYL1.drc.1.par[4] <- -WT.PYL1.drc.1.par[4]
 
-## linearly rescale all curves to WT Bmax (100%)
-PYL1.ABI1.TECAN.plate1.curves.auc <- lapply(PYL1.ABI1.TECAN.plate1.curves.auc, function(x){y <- 100*x/WT.PYL1.drc.1.par["B[inf]"]; return(y)})
+## linearly rescale all curves to WT Bmax (100%) and 0%
+coefs <- lm(c(0, 100) ~ c(mean(PYL1.ABI1.TECAN.plate1.curves.auc$L144A[1:10]), WT.PYL1.drc.1.par["B[inf]"]))
+PYL1.ABI1.TECAN.plate1.curves.auc <- lapply(PYL1.ABI1.TECAN.plate1.curves.auc, function(x){y <- x*coefs$coefficients[[2]] + coefs$coefficients[[1]]; return(y)})
 
 ## Calculate dose-response curves using duplicate measurements, generate the confidence intervals at the key concentrations
 PYL1.ABI1.TECAN.curves.auc.predict <- vector(mode = "list", length = length(PYL1.ABI1.TECAN.plate1.curves.auc))
