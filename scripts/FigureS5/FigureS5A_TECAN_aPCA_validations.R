@@ -1,7 +1,7 @@
 # The genetic architecture of an allosteric hormone receptor
 # Maximilian R. Stammnitz & Ben Lehner
 # bioRxiv link: https://www.biorxiv.org/content/10.1101/2025.05.30.656975v1
-# 28.10.2025
+# 29.10.2025
 # © M.R.S. (maximilian.stammnitz@crg.eu)
 
 ###########################################################
@@ -142,8 +142,8 @@ p.out <- summary(lm(out.all[-1,"bulk_mean"] ~ out.all[-1,"tecan_mean"]))$coeffic
 pdf("../../results/FigureS5/FigureS5A_abundancePCA_validation.pdf", height = 15, width = 18)
 
 out.S5A <- ggplot(out.all, aes(x = `tecan_mean`, y = `bulk_mean`)) +
-  scale_x_continuous(breaks = seq(f = -20, t = 140, length.out = 9), limits = c(-1000, 1000)) +
-  scale_y_continuous(breaks = seq(f = -20, t = 140, length.out = 9), limits = c(-1000, 1000)) +
+  scale_x_continuous(breaks = seq(f = 0, t = 120, length.out = 7), limits = c(-1000, 1000)) +
+  scale_y_continuous(breaks = seq(f = 0, t = 120, length.out = 7), limits = c(-1000, 1000)) +
   coord_cartesian(xlim = c(-20, 150), ylim = c(-20, 150)) +
   geom_errorbar(aes(xmin = `tecan_mean` - `tecan_sd`, xmax = `tecan_mean` + `tecan_sd`),
                 color = "black", linewidth = 0.5, height = 0) +
