@@ -26,13 +26,13 @@ lapply(packages, library, character.only = TRUE)
 ## 1. Input aPCA data and bPCA Hill parameters ##
 #################################################
 
-load("../../data/DiMSum/PYL1-PYL1/0uM_ABA/PYL1-PYL1_0uM_ABA_preprocessed_v2.RData")
+load("../../data/DiMSum/PYL1-PYL1/0uM_ABA/PYL1-PYL1_0uM_ABA_preprocessed.RData")
 PYL1.PYL1.0uM.ABA <- PYL1.PYL1.0uM.ABA[-which(PYL1.PYL1.0uM.ABA[,"Nham_aa"] == 0 & is.na(PYL1.PYL1.0uM.ABA[,"WT"]) == T),]
 PYL1.PYL1.0uM.ABA <- PYL1.PYL1.0uM.ABA[-which(PYL1.PYL1.0uM.ABA[,"Nham_aa"] == 0 & is.na(PYL1.PYL1.0uM.ABA[,"WT"]) == F)[-1],]
 PYL1.PYL1.0uM.ABA <- PYL1.PYL1.0uM.ABA[-which(PYL1.PYL1.0uM.ABA[,"Mut"] == "*"),]
 
 ## input Hill parameter distributions from dose-response curve fits, filtering like in Figure 2D/E
-load("../../data/DRCs/PYL1-ABI1_parameters_Hill_v2.RData")
+load("../../data/DRCs/PYL1-ABI1_parameters_Hill.RData")
 parameters.Hill <- parameters.Hill[which(parameters.Hill[,"R^2"] > 0.9),]
 parameters.Hill <- parameters.Hill[-grep("[*]", rownames(parameters.Hill)),]
 
