@@ -27,14 +27,14 @@ lapply(packages, library, character.only = TRUE)
 ####################################################
 
 ## aPCA
-aPCA <- as.matrix(read_xlsx("../../data/Supplementary Tables/Table-S2_v2.xlsx", sheet = 2))[-c(1:3),1:2]
+aPCA <- as.matrix(read_xlsx("../../data/Supplementary Tables/Table-S2.xlsx", sheet = 2))[-c(1:3),1:2]
 colnames(aPCA) <- c("Variant", "aPCA")
 rownames(aPCA) <- aPCA[,1]
 aPCA <- aPCA[,-1,drop=F]
 class(aPCA) <- "numeric"
 
 ## GluePCA
-GluePCA <- as.matrix(read_xlsx("../../data/Supplementary Tables/Table-S2_v2.xlsx", sheet = 1))[-c(1:2),]
+GluePCA <- as.matrix(read_xlsx("../../data/Supplementary Tables/Table-S2.xlsx", sheet = 1))[-c(1:2),]
 colnames(GluePCA) <- GluePCA[1,]
 colnames(GluePCA)[1] <- "Variant"
 GluePCA <- GluePCA[-1,]
