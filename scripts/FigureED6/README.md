@@ -1,12 +1,12 @@
-![Scripting](https://img.shields.io/badge/Language-R-yellow.svg) ![Copyright](https://img.shields.io/badge/Copyright-(c)_2025_Max\_Stammnitz\_@CRG\_Barcelona-green.svg)
+![Scripting](https://img.shields.io/badge/Language-R-yellow.svg) ![Copyright](https://img.shields.io/badge/Copyright-(c)_2026_Max\_Stammnitz\_@CRG\_Barcelona-green.svg)
 
-## Analysis scripts accompanying Stammnitz and Lehner, 2025
+## Analysis scripts accompanying Stammnitz and Lehner, 2026
 
-_Lehner Laboratory (Genetic Systems), Centre for Genomic Regulation (2022-2025)_
+_Lehner Laboratory (Genetic Systems), Centre for Genomic Regulation (2022-2026)_
 
 This repository contains custom R scripts which - in conjunction with the associated supplementary files - can be used to replicate the main and supplementary figures presented in: 
 
-**[The genetic architecture of an allosteric hormone receptor (bioRxiv, 2025)](https://www.biorxiv.org/content/10.1101/2025.05.30.656975v1)**
+**[The genetic architecture of an allosteric hormone receptor (Nature Communications, 2026)](https://www.nature.com/articles/s41467-026-70341-2)**
 
 ![example](/aux/cover.png)
 
